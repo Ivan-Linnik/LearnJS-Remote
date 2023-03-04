@@ -1771,7 +1771,7 @@
 // let num = +prompt('enter a number', '');
 // console.log(isFinite(num));// вернёт всегда true, кроме ситуаций, когда аргумент Infinity,
 //  -Infinity или не число.
-//Number.isNaN(мфдгу) более строгая проверка значения. Само значение не преобразуется в число,
+//Number.isNaN(value) более строгая проверка значения. Само значение не преобразуется в число,
 // а проверяется,
 // является ли оно чиловым.
 //Вернёт true только в том случае, когда объект принадлежит к типу number и является NaN.
@@ -1803,8 +1803,8 @@
 //Если мне нужно получить число из строки, в которой например есть единицы измерения
 //то parseInt/Float вернёт мне число, полученное до получения ошибки вычисления
 // console.log(
-    // parseInt('10px')
-    // );//10px
+// parseInt('10px')
+// );//10px
 // parseInt(a10px);//NaN
 // console.log(
 //     parseFloat('12.45$')
@@ -2010,7 +2010,7 @@
 
 // while (true) {
 //     let foundPos = str.indexOf(target, pos);
-    
+
 //     if (foundPos == -1) break;
 
 //     console.log('Найдено тут', foundPos);
@@ -2068,10 +2068,10 @@
 // с соответсвующей подстроки
 
 // console.log(
-    // str.startsWith('hell'), // true - начало с hello
-    // str.endsWith('orld'), // true - окончание с orld и т.д.
-    // str.startsWith('hi'), // false
-    // str.endsWith('hi') // false
+// str.startsWith('hell'), // true - начало с hello
+// str.endsWith('orld'), // true - окончание с orld и т.д.
+// str.startsWith('hi'), // false
+// str.endsWith('hi') // false
 // );
 
 // Получение подстроки
@@ -2426,7 +2426,7 @@
 
 // массивы по-своему реализуют метод toString - он возвраает список элементов,
 // разделённых запятыми
-// let array = [1, 2, 3, 4];
+// let array = [1, 2, 3, 4,];
 // console.log(String(array));
 
 // автор предлагает попробовать следуещее
@@ -2463,7 +2463,7 @@
 // здесь я сранвил массив с примитивами, и получается, что пустой массив
 // преобразуется в примитив и становится пустой строкой, а пустая строка
 // становится 0 при ==, а во втором примере нет преобразования строк - 
-// разные типыданных.
+// разные типы данных.
 
 // Задачи после раздела
 /////////////////
@@ -2490,24 +2490,23 @@
 // тогда перестать запрашивать. Ф-я подсчитывает и возвращает сумму значений
 // ноль считается числом
 
-function sumInput() {
-    let array = [];
+// function sumInput() {
+//     let arr = [];
+//     let sum = 0;
 
-    while (true) {
-        let value = prompt('enter a number', '');
 
-        if (value === '' || value === null || isNaN(value)) break;
-        
-        array.push(+value);
-    }
+//     while (true) {
+//         let userInput = prompt('any number', '');
 
-    let sum = 0;
+//         if (userInput === '' || userInput === null || !isFinite(userInput)) break;
 
-    for (let number of array) {
-        sum += number;
-    }
+//         arr.push(+userInput);
+//     }
 
-    return sum;
-}
+//     for (let item of arr) {
+//         sum += item;
+//     }
+//     return sum;
+// }
 
-console.log(sumInput());
+// console.log(sumInput());

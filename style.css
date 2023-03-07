@@ -71,7 +71,8 @@ a {
     min-height: 10vh;
     margin-bottom: 2vh;
 
-    background-color: #232323;
+    /* background-color: #232323; */
+    box-shadow: 0 0.02rem 0 rgba(240, 255, 255, 0.38);
 }
 
 .header__left {

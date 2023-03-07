@@ -2649,4 +2649,6 @@
 // console.log(`Item ${arr[itemIndex]}`)
 // console.log(arr);
 // важно, что эти методы имеют строгое сравнение, поэтому false не будет 0
-// а includes в отличие от других правильно работает с NaN - indexOf вернёт -1, а includes true
+// а includes в отличие от других правильно работает с NaN - indexOf вернёт -1, а includes - true
+
+// Методы find и findIndex

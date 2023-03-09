@@ -2631,7 +2631,7 @@
 //  function createRandomArr(amount) {
 //     for (let i = 0; i < amount; i++) {
 //         var item = (Math.random() * 100).toFixed(0);
-//         arr[i] = item;
+//         arr.push(item);
 //     }
 //     return arr;
 //  }
@@ -2646,7 +2646,7 @@
 
 
 // console.log(`содержится?: ${includes}, под индексом: ${itemIndex}, а с конца: ${itemIndexByEnd}`);
-// console.log(`Item ${arr[itemIndex]}`)
+// console.log(`Искомый элемент: ${arr[itemIndex]}`)
 // console.log(arr);
 // важно, что эти методы имеют строгое сравнение, поэтому false не будет 0
 // а includes в отличие от других правильно работает с NaN - indexOf вернёт -1, а includes - true

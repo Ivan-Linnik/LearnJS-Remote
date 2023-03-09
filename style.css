@@ -88,7 +88,7 @@ a {
     width: fit-content;
     padding: 0.1rem;
 
-    font-size: 3.5rem;
+    font-size: 9vh;
 
     transition: 0.3s;
     animation: shadow 3s infinite;
@@ -145,7 +145,7 @@ a {
     justify-content: space-between;
     align-items: center;
     width: 90%;
-    height: 100%;
+    height: fit-content;
     margin: 0 auto;
 }
 
@@ -155,7 +155,8 @@ a {
     position: relative;
 
     max-width: 350px;
-    height: 350px;
+    max-height: 350px;
+    padding-bottom: 30%;
 
     border-radius: 0.3rem;
     overflow: hidden;

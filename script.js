@@ -2625,6 +2625,21 @@
 //     )
 // });
 
+// let arr = [1,2,3,4,5];
+
+// function decreaseElemByOne() {
+//     let newArr = [];
+//     arr.forEach((item, index, array) => {
+//         newArr.push(item -= 1);
+//     });
+
+//     console.log(arr);
+
+//     return newArr;
+// }
+
+// console.log(forElem())
+
 // Поиск в массиве
 // let arr = [];
 

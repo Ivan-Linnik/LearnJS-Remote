@@ -190,51 +190,6 @@ a {
     line-height: 1.5rem;
 }
 
-.resul-field {
-    position:relative;
-
-    width: 80%;
-    min-height: 30vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    text-align: center;
-    font-size: 2rem;
-    color: azure;
-    background-color: inherit;
-    border-radius: 0.3rem;
-    overflow: hidden;
-
-    animation: field 3s infinite;
-}
-
-.resul-field::before {
-    content: 'console';
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-
-    display: block;
-
-    text-transform: uppercase;
-    font-size: 9rem;
-    font-weight: 700;
-
-    opacity: 0.02;
-}
-
-@keyframes field {
-    0% {
-        box-shadow: 0px 0px 5rem rgb(0, 68, 255);
-    }
-
-    100% {
-        box-shadow: 0px 0px 5rem rgb(162, 0, 255); 
-    }
-}
-
 .footer {
     min-height: 15vh;
 

@@ -2613,7 +2613,7 @@
 // Перебор forEach
 // запускает функцию для каждого элемента, его синтаксис
 // arr.forEach(function(item, index, array)) {
-    // делать что-то
+// делать что-то
 // }
 // результат функции, если она что-то возвращает отбрасывается или игнорируется
 
@@ -2667,3 +2667,119 @@
 // а includes в отличие от других правильно работает с NaN - indexOf вернёт -1, а includes - true
 
 // Методы find и findIndex
+
+// А что если у меня массив объектов? Как мне найти объект с определённым условием?
+// Метод arr.find(). Его синтаксис: let result = arr.find(function(item, index, array)) {
+// если true - возвращается искомый элемент, все итерации прерываются
+// если искомый элемент не найден, возвращается undefined;
+// } - функция вызывается поочереди для каждого элемента массива
+// Например
+
+// let users = [
+//     { id: 1, name: 'Vanya' },
+//     { id: 2, name: 'Vika' },
+//     { id: 3, name: 'Choice' },
+// ];
+
+// let user = users.find((item) => item.id == 1); // функции передан один аргумент (два передаётся редко)
+// console.log(user.name, user.id, user);
+
+// // можно передать аргумент без скобок без скобок.
+// let vika = users.find(item => item.id == 2);
+// console.log(vika)
+
+// // Метод find принимает в cебя ф-ю колбэк, которая возвращает true или false.
+// // А это я просто написал по сути тот же самый колбэк
+// let param = (item) => {return (item.id == 3) ? true : false};
+
+// let shap = users.find(param); // и использовал его
+// console.log(shap);
+
+// Метод findIndex() - по сути тоже самое, только возвращает индекс элемента, если найдет или -1, если ничего не найдёт.
+
+// Метод filter()
+// нужен тогда, когда найденных элементов может быть много. Синтаксис схож с find(), только метод filter()
+// возвращает массив из найденных элементов. Синтаксис
+// arr.filter(function(item, index, array){
+// если true - элемент добавляется к результату, и перебор продолжается
+// если ничего не найдено - возвращается пустой массив
+// })
+
+// let users = [
+//     { id: 1, name: 'Vanya' },
+//     { id: 2, name: 'Vika' },
+//     { id: 3, name: 'Choice' },
+//     { id: 4, name: 'Vanya' },
+//     { id: 5, name: 'Vika' },
+//     { id: 6, name: 'Choice' },
+// ];
+
+// let request = 'Choice';
+
+// let someUsers = users.filter(item => item.name == request);
+// console.log(someUsers);
+
+// for (let elem of someUsers) {
+//     console.log(` Идентификатор найденоого элемента: ${elem.id}, поиск по запросу ${request}`);
+// }
+
+// Преобразование массива
+// метод arr.map() - один из наиболее часто используемых. Он вызывает функцию для каждого элемента
+// и возвращает массив результатов выполнения этой функции. Его синтаксис
+// let result = arr.map(function(item, index, array){
+// возвращается новое значение вместо элемента
+// })
+//в примере из книги элемент в массиве преобразовывают в его длину.
+
+// let arr = ['Frodo', 'Sam', 'Gandalf'];
+
+// let result = arr.map(item => item = item.length);
+
+// console.log(result);
+
+// Сортировка массива
+// метод sort(fn) выполняет сортировку массива на месте, меняя в нём порядок элементов
+
+// let arr = [1, 2, 3, 45, 67, 4, 5, 21, 46];
+// let sorted = arr.sort(); // 1, 2, 21, 3, 4, 45, 45, 5, 67
+// по умолчанию, элементы сортируются как строки, т.е для них применяется лексографический порядок,
+// и получается, что 3 > 21. Чтобы использовать собственный порядок, мне нужно предоставить ф-ю в качестве аргумента sort().
+// И для пары значений ф-я должна возвращать:
+// function compareNumeric(a, b) {
+//     if (a > b) return 1;
+//     if (a == b) return 0;
+//     if (a < b) return -1;
+// };
+
+// let sortedRight = arr.sort(compareNumeric);
+// console.log(sorted, sortedRight);
+
+// а если я хочу узнать, какие элементы сравниваются, я могу вывести их на экран
+// let arr2 = [12, 34, 1, 5, 6,];
+// arr2.sort(function (a, b) {
+//     console.log(a + '<>' + b);
+// });
+
+// для более аккуратного кода лучше использовать стрелочную функцию
+// let secondSorted = arr.sort((a, b) => a - b);
+// console.log('with arrow', secondSorted);
+
+// Для строк лучше использовать метод str.localeCompare, чтобы избежать неправильного сравнения, ведь алгоритм сравнения строк
+// сравнивает буквы по их кодам, и поэтому для многих алфавитов лучше использовать метод str.localeCompare.
+
+// let nameArray = ["иван", "Виктория", "чоис"];
+// let sortedNameArray = nameArray.sort((a, b) => a.localeCompare(b));
+// console.log(nameArray, sortedNameArray);
+// // или страны
+// let countries = ['Österreich', 'Andorra', 'Vietnam'];
+// console.log(countries);
+
+// let sortedCountries = countries.sort((a, b) => a.localeCompare(b));
+// console.log(sortedCountries);
+
+// Метод erverse - меняет порядок на противоположный
+
+// let numericAr = [1, 2, 3, 4]; // сортирует правильно только если элесенты уже отсортированы правильно
+// console.log(numericAr.reverse());
+
+// Методы split и join

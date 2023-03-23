@@ -2643,13 +2643,15 @@
 // Поиск в массиве
 // let arr = [];
 
-//  function createRandomArr(amount) {
-//     for (let i = 0; i < amount; i++) {
-//         var item = (Math.random() * 100).toFixed(0);
-//         arr.push(item);
-//     }
-//     return arr;
-//  }
+function createRandomArr(amount) {
+    let arr = [];
+    for (let i = 0; i < amount; i++) {
+        var item = (Math.random() * 100).toFixed(0);
+        arr.push(item);
+    }
+    console.log('Сгенерирован массив', arr);
+    return arr;
+}
 // createRandomArr(12);
 
 // let itemIndex = arr.indexOf('45', 0); // возвращает позицию элемента или -1
@@ -2828,5 +2830,302 @@
 // );
 
 // Задачи после раздела
+//1
 // Напишите функцию camelize(str), которая преобразует строки вида «my-short-string» в «myShortString».
 // То есть дефисы удаляются, а все слова после них получают заглавную букву.
+
+// function camelize(str) {
+//     let arrayFromString = str.split('');
+//     let mapResult = arrayFromString.map((item, index, array) => {
+//         if (item === '-') {
+//             let nextItem = array[++index].toUpperCase();
+//             array.splice(index, 1);
+//             return nextItem;
+//         } return item;
+//     });
+//     let finalStr = mapResult.join('');
+
+//     return finalStr;
+// }
+// console.log(camelize('this-random-border-radius'));
+
+// function camelize(str) {
+//     return str
+//     .split('-')
+//     .map((word, index) => index == 0 ? word : word[0].toUpperCase() + word.slice(1))
+//     .join('');
+// }
+// console.log(camelize('this-random-border-radius'));
+
+//2
+// Напишите функцию filterRange(arr, a, b), которая принимает массив arr,
+// ищет элементы со значениями больше или равными a и меньше или равными b
+// и возвращает результат в виде массива.
+// Функция должна возвращать новый массив и не изменять исходный
+
+// let originalArr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+// function filterRange(array, a, b) {
+//    return array.filter(item => (item >= a && item <= b));
+// }
+
+// console.log(filterRange(originalArr, 0,3));
+
+//3
+// Напишите функцию filterRangeInPlace(arr, a, b), которая принимает массив arr и удаляет из него все значения
+// кроме тех, которые находятся между a и b . НА МЕСТЕ. То есть,проверка имеет вид a ≤ arr[i] ≤ b .
+// Функция должна изменять принимаемый массив и ничего не возвращать.
+
+// let randomArray = createRandomArr(15);
+
+// function filterRangeInPlace(arr, a, b) {
+//     for (let i = 0; i < arr.length; i++) {
+//         if (arr[i] < a || arr[i] > b) {
+//             arr.splice(i, 1);
+//             i--;
+//         };
+//     }
+//     console.log('диапазон от ', a, 'до ', b);
+// }
+// filterRangeInPlace(randomArray, 2, 17)
+// console.log('после работы функции', randomArray);
+
+//4
+// Сортировать в порядке по убыванию
+// let randomArray = createRandomArr(10);
+
+// console.log('он же в порядке убывания', randomArray.sort((a, b) => { return a - b }).reverse());
+
+//5
+// Скопировать и отсортировать массив
+// У нас есть массив строк arr. Нужно получить отсортированную копию, но оставить arr неизменённым.
+// Создайте функцию copySorted(arr), которая будет возвращать такую копию.
+
+// let arr = ["HTML", "JavaScript", "CSS", "Abeltone"];
+
+// function copySorted(arr) {
+//     return arr.slice('').sort(((a, b) => a.localeCompare(b)));
+// }
+// console.log(copySorted(arr), 'orig ->', arr);
+
+//6
+// Создать расширяемый калькулятор
+// Создайте функцию конструктор Calculator, которая создаёт «расширяемые» объекты калькулятора.
+// два этапа
+// Во-первых, реализуйте метод calculate(str), который принимает строку типа "1 + 2" в формате «ЧИСЛО оператор ЧИСЛО»
+// (разделено пробелами) и возвращает результат. Метод должен понимать плюс + и минус - .
+// Во-вторых добавьте метод , который добавляет в калькулятор новые операции. Он принимает оператор   и функцию с двумя аргументами
+// func(a,b) , которая описывает его.
+
+function Calculator() {
+    this.methods = {
+        '-': (a, b) => a - b,
+        '+': (a, b) => a + b,
+    };
+
+    this.calculate = function (str) {
+        let split = str.split(' '),
+            a = +split[0],
+            op = split[1],
+            b = +split[2];
+
+        if (!this.methods[op] || isNaN(a) || isNaN(b)) {
+            return NaN;
+        }
+        return this.methods[op](a, b);
+    };
+    this.addMethod = function (name, func) {
+        this.methods[name] = func;
+    };
+}
+let anyCalc = new Calculator;
+
+
+
+
+
+// Перебираемые объекты
+// Symbol.iterator
+// let range = { // хочу, чтобы здесь работал for of
+//     from: 0,
+//     to: 5,
+// };
+// чтобы работать с объектом как с итерируемым, нужно добавить ему специальный метод
+// с именем Symbol.iterator - это специальный встроенный символ как раз для этого.
+// range[Symbol.iterator] = function () {
+//     return {
+//         current: this.from,
+//         last: this.to,
+//         next() {
+//             if (this.current <= this.last) {
+//                 return { done: false, value: this.current++ };
+//             } else {
+//                 return { done: true };
+//             }
+//         },
+//     }
+// }
+
+// for (let cou of range) {
+//     console.log(cou);
+// } // теперь это работает
+
+// можно упростить код
+// let rangeSimply = {
+//     from: 6,
+//     to: Infinity, // Infinity - будет итерировать бесконечно
+//     [Symbol.iterator]() {
+//         this.current = this.from;
+//         return this;
+//     },
+//     next() {
+//         if (this.current <= this.to) {
+//             return { done: false, value: this.current++ };
+//         } else {
+//             return { done: true };
+//         }
+//     },
+//     rangeId: 2,
+// } // теперь метод [Symbol.iterator]() возвращает сам объект range, у него есть нужный метод next(),
+// и он теперь запоминает текущее состояние итерации в this.current.
+// Недостаток этого - нельзя использовать этот объект в двух параллельных циклах.
+
+// for (let iterator of rangeSimply) {
+//     if (iterator % 2 === 0) continue; // вывел только нечётные
+//     console.log(iterator);
+//     if (iterator >= 500) break; // остановил после 50 итераций
+// }
+
+// Можно использовать бесконечный итератор, например range будет бесконечным при range.to = Infinity.
+// Прервать такой бесконечный цикл можно при пощи директивы break.
+
+// Строка - это перебираемый объект
+// let str = 'текст строки';
+
+// for (let char of str) {
+//     console.log(char.toLocaleUpperCase())
+// }
+
+// Явный вызов итератора
+// Ниже я буду перебирать строку, как for of только вручную, прямыми вызовами.
+// Ниже - получаю строковый итератор и беру из него значения
+
+// 
+
+// Итерируемые объекты - объекты, которые реализуют метод символ итератор
+// Псеводмассивы - объекты, у которых есть length, индексированные свойства.
+// ниже пример объекта, который является псевдомассивом, но его нельзя итерировать
+// let pseudoAr = {
+//     0: 'first',
+//     1: 'second',
+//     length: 2,
+// };
+// Общее между псевдомассивами и терируемыми объектами - методы массивов с ими не работают
+
+// Array.from - принимает один из итер. объектов или псевдомассивов и делает из них массив.
+// Методы массивов теперь будут работать
+// Этот метод проверяет, является ли принимаемый объект итерируемым, а затем создаёт новый массив
+// и копирует туда элементы.
+// Метод также имеет необязательные аргументы - мап функцию - она позволяет изменять элементы перед
+// добавлением в массив и зисАрг, который помогает правильно указать this для объекта
+// Array.from(obj[, mapFn, thisArg])
+
+// let arrayLike = {
+//     0: 'first',
+//     1: 'second',
+//     length: 2,
+// };
+// let arrFrom = Array.from(arrayLike);
+// console.log(arrFrom);
+
+// for (let el of arrFrom) {
+//     console.log(el);
+// }
+// arrFrom.push('third');
+// console.log('after using push(\'third\')', arrFrom);
+
+// let range = {
+//     from: 1,
+//     to: 5,
+//     [Symbol.iterator]() {
+//         this.current = this.from;
+//         return this;
+//     },
+//     next() {
+//         if (this.current <= this.to) {
+//             return { done: false, value: this.current++ };
+//         } else {
+//             return { done: true };
+//         }
+//     },
+// };
+
+// let arrIter = Array.from(range, elem => (elem ** 0.5).toFixed(3));
+// console.log(arrIter);
+
+// Map и Set
+// Map, в отличие от объекта не приводит ключи к строке, а хранит их как есть.
+// то есть 1 и "1" = это разные ключи. Использовать Map стоит совместно с методами
+// let someMap = new Map(); // создаёт коллекцию
+// someMap.set(1, 'first value'); // записывает значение 'first value' по ключу 1 (цифра как ключ)
+// someMap.set('1', 'second value');
+
+// console.log(`
+// возрващает значение по ключу 1: ${someMap.get(1)}, если нет ключа, то ${someMap.get(23)}.
+// возвращает true, если ключ есть в коллекции: ${someMap.has('1')}.
+// удаляет элемент по ключу ${someMap.delete('1')}
+// теперь посмотрим размер: ${someMap.size}
+// всё очистим: ${someMap.clear()}
+// опять посмотрим размер: ${someMap.size}
+// `)
+
+// Можно использовать объекты в качестве ключей
+// сохранить количество посещений
+// let user = { name: 'John' };
+// let visitCountMap = new Map();
+// visitCountMap.set(user, 13);
+// console.log(visitCountMap.get(user)); //13
+// так вот, использование объектов в качестве ключей - одна из важных особенностей Map
+// и если заменить Map на Object, то я получу [object Object] вместо ключей, то есть сам объект
+// приведёт ключи к строке (что обычно и происходит).
+// Сравнивание ключей происходит как при === (sameVaueZero), но при работе с Map NaN может быть равно NaN -
+// получается, что NaN тоже может быть ключём.
+// Цепочка вызовов - каждый раз вызов map.set() возвращает объект, поэтому можно делать последовательные вызовы
+// этого метода:
+// map.set(1, 'sosi').set('2', 'guboy').set(true, 'tryasi');
+
+// Перебор Map
+// для перебора коллекции Map есть три метода
+// map.keys() - возвращает итерируемый объект по ключам
+// map.values() - возвращает итерируемый объект по значениям
+// map.entries() - возвращает итерируемый элемент по парам типа [ключ, значение] - этот вариант используется по умолчанию в for of
+
+let reciept = new Map([
+    ['cucumber', 500],
+    ['tomato', 300],
+    ['onion', 200],
+]);
+
+// // перебор по ключам (овощи)
+// console.log('перебор по ключам (овощи)')
+// for (let vegetable of reciept.keys()) {
+//     console.log(vegetable);
+// }
+
+// // перебор по значениям (граммовка)
+// console.log('перебор по значениям (граммовка)');
+// for (let weight of reciept.values()) {
+//     console.log(weight);
+// }
+
+// // перебор по элементам в формате [ключ, значение]
+// console.log('перебор по элементам в формате [ключ, значение]');
+// for (let elem of reciept.entries()) { // entries() можно не указывать
+//     console.log(elem);
+// }
+
+// Используется порядок вставки, то есть, в отличие от объектов, перебор коллекции Map происходит в том порядке, в котором
+// добавлялись пары. Кроме этого, Map имеет встроенный метод forEach, схожий со встроенным методом массивов
+// reciept.forEach((value, key, map) => {
+//     console.log(`${key} в количестве ${value} грамм (по рецепту ${map})`);
+// });

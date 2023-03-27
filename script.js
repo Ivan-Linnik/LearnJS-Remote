@@ -3100,11 +3100,11 @@ let anyCalc = new Calculator;
 // map.values() - возвращает итерируемый объект по значениям
 // map.entries() - возвращает итерируемый элемент по парам типа [ключ, значение] - этот вариант используется по умолчанию в for of
 
-let reciept = new Map([
-    ['cucumber', 500],
-    ['tomato', 300],
-    ['onion', 200],
-]);
+// let reciept = new Map([
+//     ['cucumber', 500],
+//     ['tomato', 300],
+//     ['onion', 200],
+// ]);
 
 // // перебор по ключам (овощи)
 // console.log('перебор по ключам (овощи)')
@@ -3129,3 +3129,42 @@ let reciept = new Map([
 // reciept.forEach((value, key, map) => {
 //     console.log(`${key} в количестве ${value} грамм (по рецепту ${map})`);
 // });
+
+// Object.entries: Map из Object
+// // можно сделать Map при помощи метода entries
+// let obj = {
+//     name: 'John',
+//     age: 30,
+// };
+
+// let mappy = new Map(Object.entries(obj));
+// console.log(mappy);
+
+// // и наоборот - Object из Map
+// let objFromMap = Object.fromEntries(mappy);
+// console.log(objFromMap);
+
+// Set
+// это особый вид коллекции, в котором значение может появиться только один раз, он не содержит ключей.
+// его методы похожи на Map, а создаётся он так
+// let mySet = new Set(iterable); // обычно, в качестве аргумента передаётся итерируемый объект (или массив), тогда значения
+// копируются в новый Set.
+// let arr = ['даров', 'заебал'];
+// console.log('массив', arr);
+
+// let mySet = new Set(arr);
+// console.log('сет', mySet);
+
+// mySet.add('hello').add('world').add('даров'); // даров - не добавится, т.к. уже есть в коллекции
+// console.log('добавил элементы', mySet);
+
+// // перебор Set
+
+// for (let elem of mySet) {
+//     console.log('перебор ', elem)
+// }
+
+// mySet.forEach((item, itemAgain, set) => {
+//     console.log('элемент', item, 'в сете', mySet);
+// }) // itemAgain нужен для совместимости с Map, в котором колбэк имеет 3 аргумента
+// // Set имеет те же встроенные методы, что и Map set.keys(), set.values(), set.entries() (keys и values одно и то же)

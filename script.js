@@ -2424,7 +2424,7 @@
 
 // toString для массивов
 
-// массивы по-своему реализуют метод toString - он возвраает список элементов,
+// массивы по-своему реализуют метод toString - он возвращает список элементов,
 // разделённых запятыми
 // let array = [1, 2, 3, 4,];
 // console.log(String(array));
@@ -2591,7 +2591,7 @@
 // let arr3 = arr.concat([3, 4], arr2);
 // console.log(arr3);
 // а запись arr.concat(arr[0, 2]) - буквально означает - скопировать в arr все элементы arr2 за исключением с 0 по 2 элементы.
-// Обычно, этот метод копируент только элементы массива, всё остальное копируется как есть
+// Обычно, этот метод копирует только элементы массива, всё остальное копируется как есть
 
 // let arr = [1, 2];
 // let obj = {
@@ -2916,7 +2916,7 @@ function createRandomArr(amount) {
 // (разделено пробелами) и возвращает результат. Метод должен понимать плюс + и минус - .
 // Во-вторых добавьте метод , который добавляет в калькулятор новые операции. Он принимает оператор   и функцию с двумя аргументами
 // func(a,b) , которая описывает его.
-
+// доделать
 function Calculator() {
     this.methods = {
         '-': (a, b) => a - b,
@@ -3167,4 +3167,177 @@ let anyCalc = new Calculator;
 // mySet.forEach((item, itemAgain, set) => {
 //     console.log('элемент', item, 'в сете', mySet);
 // }) // itemAgain нужен для совместимости с Map, в котором колбэк имеет 3 аргумента
-// // Set имеет те же встроенные методы, что и Map set.keys(), set.values(), set.entries() (keys и values одно и то же)
+// // Set имеет те же встроенные методы, что и Map set.keys(), set.values(), set.entries() (keys и values одно и то же).
+
+// Задачи после раздела
+
+// Допустим, у нас есть массив arr .
+// Создайте функцию unique(arr) , которая вернёт массив уникальных, не повторяющихся
+// значений массива arr .
+
+// let values = ["Hare", "Krishna", "Hare", "Krishna", "Krishna", "Krishna", "Hare", "Hare", ":-O"];
+
+// function uniq(arr) {
+//     return Array.from(new Set(arr));
+// }
+
+// let uniqValues = uniq(values);
+// console.log(uniqValues);
+
+// Напишите функцию   , которая возвращает массив слов, очищенный от анаграмм.
+// Из каждой группы анаграмм должно остаться только одно слово, не важно какое.
+
+// let anArr = ["nap", "teachers", "cheaters", "PAN", "ear", "era", "hectares"];
+// let obj = {};
+
+// function aclean(arr) {
+//     for (let i=0; i < arr.length; i++) {
+//         let sorted = 
+//         arr[i].
+//         toLowerCase().
+//         split("").
+//         sort().
+//         join("");
+
+//         obj[sorted] = arr[i];
+//     }
+//     return Object.values(obj);
+// }
+// console.log(aclean(anArr));
+
+// Мы хотели бы получить массив ключей map.keys() в переменную и работать с ними, например, применить метод push().
+// Но это не выходит:
+// Почему? Что нужно поправить в коде, чтобы вызов keys.push сработал?
+
+// let map = new Map();
+// map.set('name', 'John');
+
+// let keys = Array.from(map.keys());
+// keys.push('more')
+// console.log(keys);
+
+// WeakMap и WeakSet
+
+// основное отличие от Map в том, что ключами в WeakMap могут быть только объекты. Но если сделать объект
+// недостижимым (например, obj = null, нет ссылок на объект), то этот объект удалится сборщиком мусора и из WeakMap.
+// в WeakMap есть только следующие методы: weakMap.set(key, value), .get(key), .delete(key), .has.key. Эти ограничения
+// связаны с тем, что движок может удалить элементы в любой момент, сразу или запланирует удаление на потом, получается
+// что конечное число элементов в коллекции неизвестно, поэтому и нельзя перебрать все элементы.
+// Это нужно, когда мне нужно временно хранить данные, например из какой-нибудь библиотеки - я положу сторонний объект, как
+// ключ, и когда сам объект перестанет использоваться (станет недостижимым), он также удалится из weakMap.
+// weakMap.set(obj, 'сектретные документы') - когда obj исчезнет, секретные документы удалятся.
+// Пример реализации счётчика посещений с использованием Map:
+
+// visitCounts.js
+// let visitCountMap = new Map(); // map: пользователь => число визитов
+
+// // увеличиваю счётчик
+// function countUser(user) {
+//     let count = visitCountMap.get(user) || 0;
+//     return visitCountMap.set(user, count += 1);
+// }
+
+// // а это другая часть кода, возможно в другом файле, которая использует countUser
+// // main.js
+// let john = { name: 'John' };
+// let bob = {name: 'Bob'}
+// console.log(countUser(john)); // ведёт подсчёт посещений
+// console.log(countUser(bob)); // ведёт подсчёт посещений
+
+// bob = null; // теперь объект bob должен быть удалён из map, но этого не происходит. Такая коллекция может расти до бесконечности.
+// чтобы этого избежать, нужно просто использовать weakMap
+// let visitCountMap = new WeakMap();
+
+// function countUser(user) {
+//     let count = visitCountMap.get(user) || 0;
+//     return visitCountMap.set(user, count += 1);
+// }
+// теперь, когда объект будет недостижим, кроме как из weakMap - вся информация о нём будет удалена, в том числе из weakMap
+
+// Применение WeakMap для кэшироввания
+// cache.js
+// let cache = new WeakMap();
+
+// // вычисляю и запоминаю результат
+// function process(obj) {
+//     if (!cache.has(obj)) {
+//         let result = /* вычисляю что-то для объекта */ obj;
+//         cache.set(obj, result);
+//     }
+//     return cache.get(obj);
+// }
+
+// // main.js
+// let obj ={/* какой-то объект */};
+
+// let result1 = process(obj);
+// let result2 = process(obj);
+
+// // ... позже, когда объект больше не нужен
+// obj = null;
+
+// нет возможности получить cache.size(), так как это WeakMap,
+// но он равено 0 или скоро будет равен 0
+// Когда сборщик мусора удаляет obj, связанные с ним данные из кэша удаляются.
+
+// WeakSet
+// похожа на WeakMap - принимает в себя только объекты, когда объект становится недостижим вне WeakSet, удаляется из WeakSet.
+// имеет тот же набор методов. Может пригодиться для определения, посещал ли пользователь сайт. Рекомендуют получать
+// булевые значения.
+// let visiteSet = new WeakSet();
+
+// let sarah = {name:'Sarah'};
+// let fred = {name:'Fred'};
+
+// visiteSet.add(sarah);
+// visiteSet.add(sarah);
+// console.log('Сара заходила?:', visiteSet.has(sarah),'Фред заходил?:', visiteSet.has(fred));
+// sarah = null; // теперь sarah ,eдет удалена из коллекции
+
+
+// Задачи после раздела
+// Хранение отметок непрочитано
+
+// let messages = [
+//     { text: "Hello", from: "John", },
+//     { text: "How goes?", from: "John", },
+//     { text: "See you soon", from: "Alice", },
+// ];
+
+// let readMessagesSet = new WeakSet();
+// let isRead = Symbol('isRead');
+
+// messages[1][isRead] = true;
+
+// for (let i = 0; i < messages.length; i++) {
+//     if (messages[i][isRead] === true) {
+//         readMessagesSet.add(messages[i]);
+//     } else continue;
+// }
+
+// console.log(readMessagesSet, messages[1][isRead] === true);
+
+// Хранение времени прочтения
+// let messages = [
+//     { text: "Hello", from: "John" },
+//     { text: "How goes?", from: "John" },
+//     { text: "See you soon", from: "Alice" },
+// ];
+
+// let readMap = new WeakMap();
+
+// let isRead = Symbol('isRead');
+// let readDate = Symbol('readDate');
+
+// messages[1][isRead] = true;
+// messages[0][isRead] = false;
+
+// for (let i = 0; i < messages.length; i++) {
+//     if (messages[i][isRead] === true) {
+//         readMap.set(messages[i], [readDate] = Date());
+//     } else continue;
+// }
+
+// console.log(readMap);
+
+// Object.keys(), .values(), .entries()

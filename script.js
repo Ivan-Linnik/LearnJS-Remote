@@ -3341,3 +3341,79 @@ let anyCalc = new Calculator;
 // console.log(readMap);
 
 // Object.keys(), .values(), .entries()
+// существует общее соглашение использовать эти метода для структур данных, простые объекты тоже могут реализовать этот метод,
+// но синтаксис отличается. Для простых объектов доступны следующие методы:
+// Object.keys(obj), Object.keys(obj), Object.entries(obj). Важно, что прииспользовании с Map возвращается объект,
+// а при использовании с простым объектом - "реальный" массив. Все объекты вида Object.* возвращают массив.
+// let user = {
+//     name: 'John',
+//     age: 30,
+// };
+// console.log(Object.keys(user), Object.values(user), Object.entries(user), Object.entries(user)[0][1]);
+// пример перебора значений объекта в цикле
+
+// for (let value of Object.values(user)) {
+//     console.log(value)
+// }
+
+// Object.keys/values/entries игнорируют символьные свойства. Обычно это удобно, но если они нужны
+// для этого есть Object.getOwnPropertySymbols - возвращает массив только символьных ключей, а метод
+// Reflect.ownKeys(obj) - вернёт все ключи.
+
+// Трансформация объекта
+
+// У объекта нет множества методов, которые есть у массива, но если я хочу их применить, то:
+// можно использовать Object.entries с последующим вызовом Object.fromEntries. Пример с удвоением цен:
+// let prices = {
+//     banana: 1,
+//     orange: 2,
+//     meat: 4,
+// };
+
+// let doublePrices = Object.fromEntries(
+// преобразовать в массив, применить метод map, затем снова преобразовать в массив
+// Object.entries(prices).map(([key, value]) => ([key, value * 2]))
+// ); // важно соблюдать баланс - сохранить читаемость таких преобразований
+// console.log(doublePrices);
+
+// Задачи после раздела
+
+// Сумма свойств объекта
+// let salaries = {
+//     "John": 100,
+//     "Pete": 300,
+//     "Mary": 250,
+// };
+
+// function sumSalaries(salaries) {
+//     let sum = 0;
+//     for (let val of Object.values(salaries)) {
+//         sum += val;
+//     } 
+
+//     return sum;
+// }
+// console.log(sumSalaries(salaries));
+
+// // можно использовать reduce()
+// function sumSalariesReduce(salaries) {
+//     return Object.values(salaries).reduce((a, b) => a + b, 0);
+// }
+// console.log(sumSalariesReduce(salaries));
+
+// Подсчёт количества свойств объекта
+// игнорировать символьные, только обычные
+
+// let obj = {
+//     name: 'Jonh',
+//     age: 30,
+// };
+// let symb = Symbol('symb');
+// obj[symb] = "hasSymbol";
+
+// function count(obj) {
+//     return Object.keys(obj).length;
+// }
+// console.log(count(obj), obj);
+
+// Деструктирующее присваивание

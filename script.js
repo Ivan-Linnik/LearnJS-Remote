@@ -3417,3 +3417,5 @@ let anyCalc = new Calculator;
 // console.log(count(obj), obj);
 
 // Деструктирующее присваивание
+
+//

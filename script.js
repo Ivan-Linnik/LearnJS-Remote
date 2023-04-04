@@ -3416,6 +3416,293 @@ let anyCalc = new Calculator;
 // }
 // console.log(count(obj), obj);
 
+
 // Деструктирующее присваивание
 
-//
+// это специальный синтаксис, который позволяет мне распаковать объекты или массивы в отдельные переменные.
+// Так иногда проще. Деструктуризация также хорошо работает со сложными функциями, где много парметров и т.д.
+
+// Деструктуризация массива
+// есть массив
+// let arr = ['Ivan', 'Linnik'];
+
+// а вот деструктурирующее присваивание
+// let [firstName, lastName] = arr; // записывает firstName = arr[0], lastName = arr[1]
+// console.log(firstName, lastName); // Ivan Linnik
+
+// можно использовать переменные вместе со split()
+// let [firstName, lastName] = 'Ivan Linnik'.split(' ');
+// console.log(firstName, lastName);
+
+// Есть нюансы
+// деструктуризация не разрушает массив, она не делает ничего с правой частью, лишь присваивает значения переменным
+// это просто короткий ваирант записи
+// let firstName = arr[0];
+// let lastName = arr[1];
+
+// можно пропускать ненужные элементы массива с помощью дополнительной запятой
+// например второй элемент не нужен
+// let [firstName, , title] = ['Julius', 'Caesar', 'Consul', 'of the Roman Republic'];
+// console.log(title); // Consul
+
+// // работает с любым перебираемым объектом с правой стороны
+// let [a, b, c] = 'abc';
+// console.log(b); // и
+
+// let [one, two, three] = new Set([1, 2, 3]);
+// console.log(three); // 3
+
+// Цикл с .entries()
+// в предыдущей главе я видел Object.entries(obj) -  теперь я могу использовать его для деструкткуризации
+// let me = {
+//     name: 'Ivan',
+//     lastName: 'Linnik',
+//     age: 28,
+// };
+
+// // цикл по ключам и значениям
+// for (let [key, value] of Object.entries(me)) {
+//     console.log(`${key} : ${value}`); // name : Ivan lastName : Linnik e.t.c.
+// }
+
+// // то же самое для Map
+// let user = new Map();
+// user.set('name', 'Ivan');
+// user.set('age', 28);
+
+// for(let [key, value] of user) {
+//     console.log(`${key} : ${value}`);
+// }
+
+// Трюк обмена переменных
+// let guest = 'Choice';
+// let admin = 'Ivan';
+// console.log(`before change > guest is ${guest}, admin is ${admin}`);
+
+// [guest, admin] = [admin, guest]; // здесь я создаю временный массив из переменных и деструктурирую его
+// // в порядке замены. Так я могу поменять более двух переменных.
+// console.log(`after change > guest is ${guest}, admin is ${admin}`);
+
+// Остаточные параметры
+// Если массив длиннее, чем список слева, то лишние элементы опускаются. Но если я хочу их получить,
+// я могу добавить ещё один параметр, который получает остальные значения, испоьзуя оператор "остаточные параметры" - 
+// троеточие "...":
+
+// let [name1, name2, ...residual] = ['Julius', 'Caesar', 'Consul', 'of the Roman Republic'];
+// console.log(name1, name2);
+// console.log(residual, residual.length); // 2 - rest - это массив, начиная с 3-го элемента
+// console.log(residual[1]); // of the Roman Republic
+
+// Значения по умолчанию
+// если в массиве меньше параметров, чем в присваивании, то ошибки не будет. Отсутствующие значения считаются неопределёнными.
+// let [firstName, lastName] = [];
+// console.log(firstName); // undefined
+
+// // если я хочу, чтобы значение по умолчанию заменило существующее, то я могу указать его через "=":
+// let [name = 'Choice', surname = 'Caesar'] = ['Julius'];
+// console.log(name, surname); // Julius Caesar - Julius - из массива, Caesar - по умолчанию
+
+// значения по умолчанию могут быть более сложными, и даже функциями, они выполняются только если значения отсутствуют.
+
+// prompt запустится только для surname
+// let [name = prompt('name?'), surname = prompt('surname?')] = ['Julius'];
+// console.log(name, surname);
+
+// Деструктуризация объекта
+
+// деструктурирующее присваивание работает также с объектами, его синтаксис:
+// let {var1, var2} = {var1: .., var2: ..,}
+
+// let options = {
+//     title: 'Menu',
+//     width: 200,
+//     height: 300,
+// };
+
+// let {title, width, height} = options;
+// console.log(title, width, height); // menu 200 300
+// console.log(options.title); // Menu
+
+// все свойства options присваиваются тем же переменным, порядок не имеет значения. Вот так тоже работает
+// let {width, height, title} = {title: 'Menu', height : 200, width: 100};
+// console.log(height); // 200
+
+// Шаблон левой стороны может быть более сложным и определять соответствие между свойствами и переменными.
+// Если я захочу присвоить свойство объекта переменной с другим названием, например свойство option.width
+// присвоить переменной w, то я могу испоьлзовать двоеточие:
+// let options = {
+//     title: 'Menu',
+//     width: 200,
+//     height: 300,
+// };
+
+// // {sourceProperty: targetVariable}
+// let {width: w, height: h, title} = options; // значение свойства width передать в переменную w и т.д.
+// console.log(w, h, title); // 200 300 'Menu'
+
+// Для потенциально остутствующих свойств я также могу использовать "=".
+// let options = {
+//     title: 'Menu',
+// };
+
+// let {width = 200, height = 300, title } = options;
+// console.log(width, height, title); // 200 300 'Menu'
+
+// Как и с массивами, значения по умолчанию могут быть любые, они применятся, если значения отсутствуют в объекте.
+// prompt запросит width, но не title
+// let options = {
+//     title: 'Menu',
+// };
+
+// let {width = prompt('width?'), title = prompt('title?')} = options;
+// console.log(width, title); // результат prompt 'Menu'
+
+// также можно совмещать : и =
+// let {width: w = 200, height: h = 300, title} = options;
+// console.log(w, h, title); // 200 300 'Menu'
+
+// если у меня большой объект, то я могу взять нужное и  отбросить остальное
+
+// let options = {
+//     title: 'Menu',
+//     width: 200,
+//     height: 300,
+// };
+
+// // let {title} = options;
+// // console.log(title); // Menu
+
+// // остаток свойств можно взять также, как и для массива "...", только обращаться нужно как свойству объекта
+
+// let {title, ...rest} = options;
+// console.log(rest, rest.width); // объект с остаточными значениями 200
+
+// нюанс
+// я мог бы сделать так: let = width, heihgt;
+// {width, height} = {width: 200, height: 300}; - но так не будет работать!
+// дело в том, что движок, видя {} воспринимает это в основном потоке, как блок кода.
+// // Чтобы показать ему, что это не блок кода, нужно заключить всё выражение в скобки, и всё будет работать.
+// let options = {
+//     title: 'Menu',
+//     width: 200,
+//     height: 300,
+// };
+
+// let width, height;
+
+// ({ width, height } = options);
+// console.log(width, height); // 200 300
+
+// Вложенная деструктуризация
+
+// let options = {
+//     size: {
+//         width: 100,
+//         height: 200,
+//     },
+//     items: ['Cake', 'Donut'],
+//     extra: true,
+// };
+
+// шаблон в левой   части должен иметь такую же структуру, чтобы извлечь данные
+// деструктуризация на несколько строк - для ясности
+
+// let {
+//     size: {
+//         width,
+//         height,
+//     },
+//     items: [item1, item2], // добавил элементы к items
+//     title = 'Menu', // отсутствует в объекте, будет использовать как параметр по умолчанию
+// } = options;
+// заметим, что переменные для size и items отсутствуют, т.к. я сразу взял их содержимое
+// console.log(width, height, item1, item2, title); // 100 200 'Cake' 'Donut' 'Menu'
+
+// Умные параметы функций
+
+// есть ситуации, когда когда функция имеет много параметров, большинство из которых не обязательны.
+// проблемы в том - как запомнить эти параметры или вызвать функцию, когда большинство параметров передавать не надо
+// можно передать параметры как объект и функция деструктуризирует его:
+
+// передам этот объект в функцию
+let options = {
+    title: 'My menu',
+    items: ['item_1', 'item_2'],
+};
+
+// и она извлечёт его параметры
+// function showMenu({title = 'Untitled', width = 200, height =300, items = []}) {
+//     console.log(title, width, height); // My menu 200 300
+//     console.log(items); // ['item_1', 'item_2']
+// }
+// showMenu(options);
+
+// можно использоватбь более сложное деструктурирование с вложенными объектами и двоеточием
+// function showMenu({
+//     title = 'Untitled',
+//     width: w = 200, // присваиваю width в w
+//     height: h = 300, // присваиваю height в h
+//     items: [item1, item2], // первый элемент items присвоится item1, второй - item2
+// }) {
+//     console.log(title, w, h); // My menu 200 300
+//     console.log(item1, item2); // item_1 item_2
+// }
+// showMenu(options);
+
+// такое использование подразумевает, что в функцию должен быть передан аргумент!
+// если мне нужны все значения по умолчанию - нужно передать пустой объект, иначе будет ошибка, но её можно исправить,
+// сделав {} значением по умолчанию для всего объекта
+// function showMenu({title = 'Untitled', width = 200, height = 300, items} = {}) {
+//     console.log(title, width, height); // Untitled 200 300
+// }
+// showMenu();
+// в примере выше всегда в функции есть объект, поэтому есть, что деструктуризировать
+
+// Задачи после раздела
+
+// деструктурирующее присваивание
+// let user = {
+//     name: 'John',
+//     years: 30,
+// };
+
+// let { name, years: age, isAdmin = false } = user;
+// console.log(name, age, isAdmin); // John 30 false
+
+// Максимальная зарплата
+// let salaries = {
+//     "John": 100,
+//     "Pete": 300,
+//     "Mary": 250,
+// };
+
+// function getTopSarary(obj) {
+//     let max = 0;
+//     let maxName = null;
+
+//     for (const [name, salary] of Object.entries(obj)) {
+//         if (max < salary) {
+//             max = salary;
+//             maxName = name;
+//         };
+//     }
+//     return maxName;
+// }
+
+// console.log(getTopSarary(salaries));
+
+// Дата и время
+// это новый встроенный объект, он содержит дату и время, а также предоставляет методы управления ими.
+// для его содзания нужно вызвать конструктор new Date(). Если не передать аргументы, запишется текущие дата и время.
+let now = new Date();
+console.log(now);
+
+// new Date(milliseconds)
+// создать объект с временем, равным количеству миллисекунд(тысячная доля секунды), прошедших с 1 января 1970 года UTC+0
+// 0 соответствует UTC+0
+let Jan01_1970 = new Date(0);
+console.log(Jan01_1970);
+
+// теперь добавим 24 часа и получим 2 янаваря 1970
+let Jan02_1970 = new Date(24 * 3600 * 1000);
+console.log(Jan02_1970);

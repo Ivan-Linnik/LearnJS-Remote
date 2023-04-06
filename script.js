@@ -3694,15 +3694,334 @@ let options = {
 // Дата и время
 // это новый встроенный объект, он содержит дату и время, а также предоставляет методы управления ими.
 // для его содзания нужно вызвать конструктор new Date(). Если не передать аргументы, запишется текущие дата и время.
-let now = new Date();
-console.log(now);
+// let now = new Date();
+// console.log(now);
 
 // new Date(milliseconds)
 // создать объект с временем, равным количеству миллисекунд(тысячная доля секунды), прошедших с 1 января 1970 года UTC+0
 // 0 соответствует UTC+0
-let Jan01_1970 = new Date(0);
-console.log(Jan01_1970);
+// let Jan01_1970 = new Date(0);
+// console.log(Jan01_1970);
 
 // теперь добавим 24 часа и получим 2 янаваря 1970
-let Jan02_1970 = new Date(24 * 3600 * 1000);
-console.log(Jan02_1970);
+// let Jan02_1970 = new Date(24 * 3600 * 1000);
+// console.log(Jan02_1970);
+
+// целое число миллисекунд, прошедших с января 1970 года называется - таймстамп(timestamp  - отметка времени)
+// это легковесное численное представление даты. Из него всегда можно получить дату new Date(timestamp) и преобразовать
+// существующий объект Date в таймстамп, использую метод date.getTime().
+// датам до 1 января 1970 будут соответствовать отрицательные таймстампы
+
+// 31 декабря 1969 года
+// let Dec31_1969 = new Date(-24 * 3600 * 1000);
+// console.log(Dec31_1969);
+
+// new Date(datestring)
+// если аргумент всего один, и это строка, то из него прочитывается дата
+// let date = new Date('2017-06-23');
+// console.log(date);
+// Время не указано, поэтому оно ставится в полночь по Гринвичу
+// меняется в соответствии с часовым поясом места выполнения кода
+
+// new Date (year, month, date, hours, minutes, seconds, ms)
+// обязательны только первые два аргумента, year - должен состоять из 4 цифр, month - начинается с 0 (январь) и
+// заканчивается 11 (декабрь).
+// date означает день месяца, если не задан - принимается 1. Остальные параметры, если не заданы, то - 0.
+// console.log(new Date(2020, 0));
+// максимальная точность - 1 ms
+
+// Получение компонентов даты
+// методы получения компонентов даты: getFullYear() - получить год (4 цифры), getMonth(), getDate(), getHours(),
+// getMinutes(), getSeconds(), getMilliseconds(), getDay() - получить день недели: 0 - воскресенье, 6 - суббота.
+// все эти методы возвращают значения в соответсвтии с местным часовым поясом, однако существуют методы, которые
+// возвращают значения в зоне UTC+0: getUTCFullYear(), getUTCMonth, getUTCDay().
+
+// Если часовой пояс смещён относительно UTC, то код ниже покажет разные часы
+// текущая дата
+// let now = new Date();
+
+// час в текущем часовом поясе
+// console.log(now.getHours());
+
+// час в лондонском времени без перехода на летнее время
+// console.log(now.getUTCHours());
+
+// Существуют также два особых метода без UTC варианта
+// getTime() - для заданной даты возвращает таймстамп - количество миллисекунд, прошедших с 1 января 1970 года UTC+0
+// getTimeZoneOffset() - возвращает разницу в минутах между UTC+0 и местным часовым поясом
+
+// Установка компонетов даты
+// методы установки:
+// setFullYear(year, [month], [date]), setMonth([month], [date]), setDate(date), setHours(hour, [min], [sec], [ms]),
+// setMinutes(minute, [sec], [ms]), setSeconds(second, [ms]), setMilliseconds(ms), setTimeMilliseconds - устанавливает
+// дату в виде целого количества миллисекунд, прошедших с 01.01.1970. У всех этих методов, кроме setTime() есть UTC вариант.
+// Методы позволяют указывать несколько компонентов даты, если компонент не указать - он не меняется.
+// let today = new Date();
+// today.setHours(0)
+// console.log(today); // выведет сегодняшнюю дату, но количество часов будет 0, а вот минуты изменятся (от 00:00)
+// today.setHours(0, 0, 0, 0);
+// console.log(today); // всё время будет равно 0
+
+// Автоисправление даты
+// let date = new Date(2013, 0, 32); // 32 января 2013
+// console.log(date); // 1 февраля 2013 - объект сам себя исправил!
+
+// допустим нужно увеличить дату на 2 дня - нужно просто прибавить к дате 2 дня, а объект Date сам определит високосный
+// это год или нет
+// let date = new Date(2016, 1, 28); // 28 февраля
+// date.setDate(date.getDate() + 2);
+// console.log(date); // в зависимости от года будет 1 или 2 марта
+
+// также возможность изменения используют, чтобы получить дату по прошествии заданного отрезка времени
+
+// получить дату, спустя 70 секунд от текущего момента
+// let date = new Date();
+// date.setSeconds(date.getSeconds() + 70); // можно установить нулевые и отрицательные значения
+// console.log(date);
+
+// Преобразование к числу, разность дат
+
+// если объект Date преобразовать к числу, то получу аналогичный таймстамп, возвращаемый .getTime()
+// let date = new Date();
+// console.log(date, '>', +date, date.getTime()); // количество миллисекнд
+// побочный эффект от этого - разницу между датами можно вычислять в милисекундах
+
+// let start = new Date(); // начало отсчёта времени
+
+// выполняю некоторые действия
+// for (let i = 0; i < 100000; i++) {
+//     let doSomething = i * i * i;
+// }
+
+// let end = new Date(); // конец отсчёта времени
+
+// console.log(`цикл отработал за ${end - start} миллисекунд`);
+
+// Date.now()
+// если нужно просто измерить время, объект Date мне не нужен. Date.now() эквивалентен new Date.getTime(),
+// только он создаёт промежуточный объект Date. Этот сбособ работает быстрее и не нагружает сборщик мусора.
+// можно переписать предыдущий пример так:
+
+// let start = Date.now();
+
+// for (let i = 0; i < 100000; i++) {
+//     let doSomething = i * i * i;
+// }
+
+// let end = Date.now();
+// console.log(`цикл отработал за ${end - start} миллисекунд`); // быстрее на 3-5 миллисекунд
+
+// Бенчмаркинг
+
+// протестируем скорость выполнения функций, какая быстрее?
+
+// function diffSubstract(date1, date2) {
+//     return date2 - date1;
+// }
+
+// function diffGetTime(date1, date2) {
+//     return date2.getTime() - date1.getTime();
+// }
+
+// но эти функции простые, поэтому мне понадобится 100 000 повторений
+
+// function bench(f) {
+//     let date1 = new Date(0)
+//     let date2 = new Date();
+
+//     let start = Date.now();
+
+//     for (let i = 0; i < 100000; i++) f(date1, date2);
+//     return Date.now() - start;
+// }
+// console.log(`
+// время diffSubstract: ${bench(diffSubstract)}, мс
+// время diffGetTime: ${bench(diffGetTime)}, мс
+// `); // getTime в 11 раз быстрее
+// это потому что не производится преобразование типов и интерпретаторам так намного легче работать
+
+// представим, что во время выполнения bench(diffSubstract) процессор делал что-то ещё, а к моменту начала 
+// bench(diffGetTime) завершил - это нормально для многопроцессорных ОС - поэтому нужно делать много бенчмарков
+
+// function diffSubstract(date1, date2) {
+//     return date2 - date1;
+// }
+
+// function diffGetTime(date1, date2) {
+//     return date2.getTime() - date1.getTime();
+// }
+
+// function bench(f) {
+//     let date1 = new Date(0);
+//     let date2 = new Date();
+
+//     let start = Date.now();
+
+//     for (let i = 0; i < 100000; i++) f(date1, date2);
+
+//     return Date.now() - start;
+// }
+
+// let time1 = 0;
+// let time2 = 0;
+
+// предварительные запуски функций для "разогрева"
+// bench(diffSubstract);
+// bench(diffGetTime);
+
+// запущу бенч каждой функции 10 раз
+// for (let i = 0; i < 10; i++) {
+//     time1 += bench(diffSubstract);
+//     time2 += bench(diffGetTime);
+// }
+// console.log(`
+// итоговое время diffSubstract: ${time1}
+// итоговое время diffGetTime: ${time2}
+// `);
+
+// современные интерпретаторы не оптимизируют должным образом то, что выполняется 1 раз (или редко), оптимнизируют только то,
+// что выполняется много раз. Поэтому делают предварительные запуски для "разогрева". Я напишу их выше.
+
+// Разбор строки с датой
+// метод Date.parse(str) - получает дату из строки.
+// формат строки должен быть YYYY-MM-DDTHH:mm:ss.sssZ, где
+// YYYY-MM-DD - год, месяц и день, символ Т - используется как разделительб HH:mm:ss.sss - часы, минуты, секунды, миллисекунды,
+// Z - необязательная часть - обозначает часовой пояс в формате +- hh:mm, если указать просто букву Z - получу UTC+0.
+// возможно сокращённое использование, тогда просто из аргумента убирается ненужное.
+// Вызов этого метода возвращает таймстамп (количество миллисекунд с 1 янв 1970 UTC+0), если формат неправильный - NaN.
+
+// let ms = Date.parse('2012-01-26T13:51:50.417-07:00');
+// console.log(ms); // 1327611110417
+
+// можно создать объект Date из таймстампа
+// let date = new Date(Date.parse('2012-01-26T13:51:50.417-07:00'));
+// console.log(date); // Fri Jan 27 2012 00:51:50 GMT+0400 (Moscow Standard Time)
+// let date2 = new Date(Date.parse('2012-01-26'));
+// console.log(date2); // Thu Jan 26 2012 04:00:00 GMT+0400 (Moscow Standard Time)
+
+// Задачи после раздела
+
+// создать объект дата с нужной датой и временем
+// let date = new Date(Date.parse('2012-01-20T03:12'));
+// console.log(date);
+
+//написать функцию, показывающую день недели
+// let date = new Date(2012, 0, 3);
+
+// function getWeekDay(date) {
+//     let weekDays = ['ВС', 'ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ',];
+
+//     return weekDays[date.getDay()];
+// }
+
+// console.log(getWeekDay(date));
+
+// день в европейской нумерации
+// let date = new Date(2012, 0, 3);
+
+// function getLocalDay(date) {
+//     let day = date.getDay();
+
+//     if (day == 0) {
+//         day = 7;
+//     }
+
+//     return day;
+// }
+
+// console.log(getLocalDay(date));
+
+// какой месяц был много дней назад
+// let date = new Date(2015, 0 ,2);
+// console.log(date);
+
+// function getDateAgo(date, days) {
+//     let dateCopy = new Date(date);
+
+//     dateCopy.setDate(date.getDate() - days);
+
+//     return dateCopy;
+// }
+
+// console.log(getDateAgo(date, 365));
+
+// Последнее число месяца
+// function getLastDayOfMonth(year, month) {
+//     let date = new Date(year, month + 1, 0);
+
+//     return date.getDate();
+// }
+
+// console.log(getLastDayOfMonth(2023, 1));
+
+// // Сколько сегодня прошло секунд
+// function getSecondsToday() {
+//     let now = new Date();
+
+//     let today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // получил сегодняшний день с 00 часов, минут, секунд
+//     let diff = now - today;
+
+//     return +(diff / 1000).toFixed(0);
+
+// }
+// console.log(getSecondsToday());
+
+// // Альтернативное решение
+// function getSecondsTodayAlt() {
+//     let d = new Date();
+
+//     return d.getHours() * 3600 * d.getMinutes() * d.getSeconds(); // получил часы и минуты и преобразовал их в секунды
+// }
+// console.log(getSecondsTodayAlt());
+
+// Сколько секунд осталось до завтра
+// function getSecondsToTomorrow() {
+//     let now = new Date();
+//     let tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+
+//     let remainder = tomorrow - now;
+
+
+//     return parseInt((remainder / 1e3).toFixed(0), 10);
+// }
+// console.log(getSecondsToTomorrow());
+
+// Форматирование относительной даты
+// let date = new Date(new Date - 58e5);
+
+// function formatDate(date) {
+//     let diff = new Date() - date; // разница в милисекундах
+
+//     if (diff < 1e3) {
+//         return 'прямо сейчас';
+//     }
+
+//     let secondsDiff = Math.floor(diff / 1e3); // преобразовал разницу в секунды
+
+//     if (secondsDiff < 60) {
+//         return secondsDiff + ' секунд назад';
+//     }
+
+//     let minutesDiff = Math.floor(secondsDiff / 6e1); // преобразовал разницу в минуты
+
+//     if (minutesDiff < 60) {
+//         return minutesDiff + ' минут назад';
+//     }
+
+//     // отформатировать дату
+//     // добавить ведущие нули к единственной цифре дню/месяцу/часам/минуте
+//     let d = date;
+//     d = [
+//         '0' + d.getDate(),
+//         '0' + (d.getMonth() + 1),
+//         '' + d.getFullYear(),
+//         '0' + d.getHours(),
+//         '0' + d.getMinutes(),
+//     ].map(component => component.slice(-2)); // взять последние 2 цифры из каждого компонента
+
+//     // соеденить компоненты в дату
+//     return d.slice(0, 3).join('.') + ' ' + d.slice(3).join(':');
+// }
+// console.log(formatDate(date));
+
+// Формат JSON, метод toJSON

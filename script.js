@@ -4025,3 +4025,252 @@ let options = {
 // console.log(formatDate(date));
 
 // Формат JSON, метод toJSON
+
+// часто нужно преобразовать объект в строку, для этого подходит toString(){}, но если я имею дело со сложным объектом,
+// подобные преобразования могут стать проблемой. Для этого есть специальные методы.
+// JSON - общий формат для представления значений и объектов, он может использоваться, когда клиент использует JavaScript,
+// а сервер написан на Ruby/PHP/Java или любом другом языке.
+
+// JavaScript предоставляет методы: JSON.stringify - для преобразования объектов в JSON, JSON.parse - для преобразования
+// JSON обратно в объект.
+
+// let student = {
+//     name: 'Ivan',
+//     age: 28,
+//     isAdmin: false,
+//     courses: ['html', 'css', 'js'],
+//     wife: null,
+// };
+
+// let json = JSON.stringify(student);
+// console.log(json, typeof json); // {"name":"Ivan","age":28,"isAdmin":false,"courses":["html","css","js"],"wife":null} string
+// полученная строка называется JSON-форматированным или сериализованным объектом. Его можно отправить по сети и т.д.
+
+// Важной особенностью является то, что в отличие от объектного литерала, строки в JSON используют строго двойные кавычки,
+// имена свойств также заключаются в двойные кавычки.
+
+// JSON.stringify может быть применён для примитивов. Сам JSON поддерживает следующие типы данных:
+// объекты, массивы, строки, числа, логические значения, null.
+// пример:
+// console.log(JSON.stringify(1)); // 1 - остаётся числом, но его тип текстовый
+// console.log(JSON.stringify('text')); // "text" - остаётся текстом, но в двойных кавычках
+// console.log(JSON.stringify(true)); // true - остаётся булевым, но его тип текстовый
+// console.log(JSON.stringify([1, 2, 3,])); // остаётся массивом, но его тип текстовый
+
+// JSON является независимой от языка спецификацией данных, поэтому может пропускать некоторые специфичные свойства,
+// такие как свойства-функции(методы объекта), символьные ключи и значения, свойства, содержащие undefined. Но это
+// поведение можно настроить.
+
+// Замечательно то, что поддерживаются вложенные объекты, они конвертируются в строку автоматически.
+// Важное ОГРАНИЧЧЕНИЕ - не должно быть циклических ссылок!
+// let room = {
+//     number: 23,
+// };
+
+// let meetup = {
+//     title: 'Conference',
+//     parcipiants: ['Johnn', 'Ann'],
+// };
+
+// meetup.place = room; // ссылается на room
+// room.ocupiedBy = meetup; // ссылается на meetup
+
+// JSON.stringify(meetup); // ERROR: Converting circular structure to JSON
+
+// Исключаем и преобразуем replacer
+
+// полный синтаксис JSON.stringify
+// let json = JSON.stringify(value, [replacer, space]), где value - значение для кодирования,
+// replacer - массив свойств для кодирования или функция соответствия function(key, value),
+// space - дополнительное пространство (отступы), используемые для форматирования.
+
+// в большинстве случаев обычного вызова достаточно, но если мне нужно отфильтровать циклические ссылки, то
+// можно использовать второй аргумент.
+
+// если передать массив свойств, то будут закодированны только они
+// let room = {
+//     number: 23,
+// };
+
+// let meetup = {
+//     title: 'Conference',
+//     parcipiants: [{ name: 'Johnn' }, { name: 'Ann' }],
+//     place: room, // ссылается на room
+// };
+
+// room.occupedBy = meetup; // ссылается на meetup
+// console.log(JSON.stringify(meetup, ['title', 'parcipiants'])); // {"title":"Conference","parcipiants":[{},{}]}
+
+// Здесь список свойств строго определяется ко всей структуре объекта, и внутри parcipiants пустые объекты,
+// потому что name нет в списке.
+
+// включу в список свойств все, кроме occupedBy
+// console.log(JSON.stringify(meetup, ['title', 'parcipiants', 'place', 'name', 'number'])); // {"title":"Conference","parcipiants":[{"name":"Johnn"},{"name":"Ann"}],"place":{"number":23}}
+
+// теперь всё, кроме occupedBy сериализовано, но список действий довольно длинный
+// но в качестве replacer я могу использовать функцию, а не массив. Она будет вызываться для каждой пары (key, value), и она
+// должна возвращать заменённое значение, которое будет использоваться вместо исходного. Или undefined, чтобы пропустить значение.
+
+// в моём случае можно вернуть value "как есть" для всего, кроме occupedBy, occupedBy будет проигнорировано, так как функция
+// вернёт undefined
+
+// let room = {
+//     number: 23,
+// };
+
+// let meetup = {
+//     title: 'Conference',
+//     parcipiants: [{ name: 'Johnn' }, { name: 'Ann' }],
+//     place: room, // ссылается на room
+// };
+
+// room.occupedBy = meetup; // ссылается на meetup
+// console.log(JSON.stringify(meetup, function replacer(key, value) {
+//     return (key === 'occupedBy') ? undefined : value;
+// }, 2));
+
+// важно что функция replacer получает каждую пару ключ-значение, включая вложенные объекты и элементы массива
+// Значение this внутри replacer - это сам объект, который содержит теущее свойство.
+// Первый вызов особенный - ему передаётся специальный "объект-обёртка" {"": meetup}, другими словами - первая пара
+// ключ-значение будет иметь пустой ключ, а значением будет целевой объект в общем. Идея в том, чтобы дать replacer как
+// можно больше возможностей - проанализировать весь объект, заменить или даже пропустить весь объект целиком.
+
+// Форматирование space
+// для передачи данных по сети этот аргумент не нужен, он нужен, чтобы выводить файл в удобочитаемом виде - для логирования
+// и красивого вида.
+
+// Пользовательский 'toJSON'
+// как и toString() для преобразования строк, объект может предоставлять метод toJSON для преобразования в строку.
+// JSON.srtingify автоматически вызывает его, если он есть, например:
+// let room = {
+//     number: 23,
+// };
+
+// let meetup = {
+//     title: 'Conference',
+//     date: new Date(Date.UTC(2017, 0, 1)),
+//     room,
+// };
+// console.log(JSON.stringify(meetup)); // {"title":"Conference","date":"2017-01-01T00:00:00.000Z","room":{"number":23}}
+// дата стала текстовой, потому что объект Date имеет встроееный метод toJSON, который возвращает строку.
+
+// можно реализовать подобный метод toJSON
+// let room = {
+//     number: 23,
+//     toJSON() {
+//         return this.number;
+//     },
+// };
+
+// let meetup = {
+//     title: 'Conference',
+//     room,
+// };
+// console.log(JSON.stringify(room)); // 23
+// console.log(JSON.stringify(meetup)); // {"title":"Conference","room":23}
+
+// как видно, toJSON используется как при прямом вызове JSON.stringify, так и когда room вложен в другой сериализуемый объект.
+
+// JSON.parse
+
+// чтобы декодировать строку, мне нужен другой метод - JSON.parse
+// его синтаксис: let value = JSON.parse(str, [reviver]);
+// str - JSON для преобразования в объект,
+// reviver - необязательная функция, которая будет вызываться для каждой пары ключ/значение, может преобразоввывать значения
+
+// пример
+// let numbers = "[1, 2, 3, 4, 5, 6]"; // строковый массив
+// numbers = JSON.parse(numbers);
+// console.log(numbers, numbers[3]); // [1, 2, 3, 4, 5, 6] 4
+
+// или для вложенных объектов
+// let user = '{ "name": "Ivan", "age": 28, "isAdmin": false, "friends": [0, 1, 2, 3, 4, 5] }';
+// user = JSON.parse(user);
+// console.log(user.friends[1]); // 1
+
+// JSON может быть настолько сложным, насколько это необходимо. Объекты могут включать массивы, другие объекты.
+// Написанный от руки JSON может включать ошибки - иногда от руки пишут для отладки.
+// let json = '{
+//     name: "John", // здесь ошибка - ключ без двойных кавычек
+//     "surname": 'Smith', // ошибка - одинарные кавычки
+//     'isAdmin': false, // одинарные кавычки
+//     "birthday": new Date(200,0,3), // нельзя использовать конструктор new, только значения объекта Date
+//     "friends": [0,1,2,3,4], // здесь все в порядке
+// }';
+
+// Также JSON не поддерживает комментарии - если они есть - файл считается недействительным.
+// есть формат JSON5, который поддерживает одинарные кавычки и комментарии, но это отдельная библиотека.
+// а строгость обычного JSON нужна для легкой и надёжной и быстрой реализации алгоритма кодирования и чтения.
+
+// Использование Reviver
+
+// допустим, я получил с сервера объект meetup в виде строки данных, вот такой
+// title: (meetup title), date: (meetup date)
+// let str = '{"title": "Conference", "date": "2017-11-30T12:00:00.000Z"}';
+
+// теперь мне нужно его десериализовать, т.е снова превратить в объект JavaScript
+// let meetup = JSON.parse(str);
+// console.log(meetup.date.getDate()); // ошибка
+// потому, что значением meetup.date является строка, а не объект Date
+
+// теперь я передам JSON.parse функцию восстановления, вторым аргументом, которая будет возвращать значения как есть,
+// но date станет Date
+
+// let meetup = JSON.parse(str, function (key, value) {
+//     if (key == 'date') return new Date(value);
+//     return value;
+// });
+// console.log(meetup.date.getDate(), meetup.date.getFullYear()); // 30 2017 - работает!
+
+// кстати, это работает и для вложенных объектов
+// let scedule = `{
+//     "meetups": [
+//         {"title": "Conference", "date":"2017-11-30T12:00:00.000Z"},
+//         {"title": "bithday", "date":"2017-04-18T12:00:00.000Z"}
+//     ]
+// }`;
+
+// scedule = JSON.parse(scedule, function (key, value) {
+//     if (key == 'date') return new Date(value);
+//     return value;
+// });
+// console.log(scedule.meetups[0].date.getMonth() + 1); // 11 - всё работает!
+
+// Задачи после раздела
+
+// преобразовать объект в JSON, а затем обратно в в обычный объект (прочитать его в другую переменную)
+// let user = {
+//     name: "Василий Иванович",
+//     age: 35,
+// };
+// // user = JSON.stringify(user);
+// // console.log(user, typeof user); // {"name":"Василий Иванович","age":35} string
+
+// // let parseUser = JSON.parse(user);
+// // console.log(parseUser.name, parseUser); // Василий Иванович {name: 'Василий Иванович', age: 35}
+
+// // или так
+// let parsedUser = JSON.parse(JSON.stringify(user));
+// console.log(parsedUser, parsedUser.name); // {name: 'Василий Иванович', age: 35} 'Василий Иванович'
+
+// Исключить обратные ссылки
+//  написать функцию для JSON-преобразования, которая удалит свойства, ссылающиеся на meetup
+// let room = {
+//     number: 23,
+// };
+
+// let meetup = {
+//     title: 'Совещание',
+//     occupiedBy: [{ name: 'Иванов' }, { name: 'Петров' }],
+//     place: room,
+// };
+
+// // цикличные ссылки
+// room.occupiedBy = meetup;
+// meetup.self = meetup;
+
+// console.log(JSON.stringify(meetup, function replacer(key, value) {
+//     return (key != '' && value == meetup) ? undefined : value;
+// })); // {"title":"Совещание","occupiedBy":[{"name":"Иванов"},{"name":"Петров"}],"place":{"number":23}}
+
+// Продвинутая работа с функциями - рекурсия и стек

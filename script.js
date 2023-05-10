@@ -5234,7 +5234,7 @@ let options = {
 // setTimeout - вызвать функцию один раз через определённое время. setTimeOut(function/code, delay, [arg1], [arg2], ...)
 // func/code - обычно это функция, но по историческим причинам можно вызвать строку кода(не рекомендуется).
 // delay - задержка перед вызововом в миллисекундах, по умолчанию - 0.
-// arg1, arg2 - аргументы, gthедаваемые в функцию.
+// arg1, arg2 - аргументы, передаваемые в функцию.
 //Примеры
 // function sayHi() {
 //     console.log('Hi!');
@@ -5254,7 +5254,7 @@ let options = {
 // Важно передавать просто ссылку на функцию, а не запускать её (вызывать нужно без скобок, просто sayHi)!
 
 // Отмена через clearTimeout
-// вызов setTimeout возвращает идентификатор таймера timerId, который vj;но использовать для отмены дальнейшего выполнения.
+// вызов setTimeout возвращает идентификатор таймера timerId, который можно использовать для отмены дальнейшего выполнения.
 // Синтаксис для отмены: let timerId = setTimeout(...); clearTimeout(timerId);
 // Планирую вызов функции, а затем отменяю его (ничего не произойдёт - отменю же)
 // let timerId = setTimeout(() => console.log('Nothing happens'), 1e3);
@@ -5289,7 +5289,7 @@ let options = {
 // Получается, что вложенный setTimeout более гибкий, чем setInterval, потому что можно запланировать следующий вызов
 // по-разному, в зависимости от результатов предыдущего.
 // Например нужно написать код, который отправляет запрос на сервер каждые 5 секунд, но если сервер перегружен, то
-// необходимо увеличить интервал запросов до 10, 20, 40 секунд. Вот псевдокод
+// необходимо увеличить интервал запросов до 10, 20, 40 секунд. Вот псевдокод:
 // let delay = 5e3;
 // let isRequest = false;
 
@@ -5316,7 +5316,7 @@ let options = {
 
 // Сборка мусора и колбэк setTimeout и setInterval
 // когда функция передаётся в эти методы, на неё создаётся внутренняя ссылка и сохраняется в планировщике. Это предотвращает
-// попадание функции в сборщик мусора, даже если на неё нет других ссылок. Для setInterval aeyкция будет доступна, пока
+// попадание функции в сборщик мусора, даже если на неё нет других ссылок. Для setInterval функция будет доступна, пока
 // не будет вызван clearInterval.
 // Побочный эффект в том, что функция ссылается на внешнее лексическое окружение, поэтому пока она существует, внешние переменные
 // существуют тоже. Они могут занимать больше памяти, чем сама функция. Поэтому, если функция больше не нужна, то лучше отменить
@@ -5405,3 +5405,333 @@ let options = {
 
 
 // Декораторы и переадресация вызова call/apply
+
+// Прозрачное кэширование
+// допустим у меня есть ресурсоёмкая функция, возвращающая стабильный результат для одного и того же "х".
+// и если она вызывается часто, то я могу кэшировать результат для экономии на повторных вычислениях. И вместо того, чтобы
+// расширять/усложнять функционал самой функции, я могу обернуть её в функцию-обёртку, которая добавит кэширование.
+// Код с пояснениями
+// function slow(x) {
+//     // ресурсоёмкие вычисления
+//     console.log(`Called with x = ${x}`);
+
+//     return x;
+// }
+
+// function cachingDecorator(func) {
+//     let cache = new Map();
+
+//     return function (x) {
+//         if(cache.has(x)) { // если кэш содержит такой х
+//             return cache.get(x); // читаем результат из него
+//         }
+
+//         let result = func(x); // иначе, вызываем функцию
+
+//         cache.set(x, result); // и кэшируем (запоминаем) результат
+
+//         return result;
+//     };
+// }
+
+// slow = cachingDecorator(slow);
+// console.log(slow(1)); // кэширую 1
+// console.log('Again ' + slow(1)); // возвращаю из кэша
+// console.log(slow(2)); // кэширую 2
+// console.log('Again ' + slow(2)); // возвращаю из кэша
+
+// В коде выше - cachingDecorator - это специальная функция-декоратор, которая принимает в себя другую функцию
+// и меняет её поведение. Идея в том, чтобы использовать эту обёртку с любой функцией.
+// Результат вызова cachingDecorator является обёрткой, т.е. function(x) оборачивает вызов func(x) в кэширующую логику.
+
+// Применение func.call для передачи контекста
+// упомянутый выше декоратор не подходит для работы с методами объекта. Попробую ниже:
+// let worker = {
+//     someMethod() {
+//         return 2;
+//     },
+//     slow(x) {
+//         // очень тяжёлая задача для процессора
+//         console.log('Called with x = ' + x);
+//         return x * this.someMethod(); // (*)
+//     },
+// };
+
+// использую такой же декоратор
+// function cachingDecorator(func) {
+//     let cache = new Map();
+
+//     return function (x) {
+//         if (cache.has(x)) {
+//             return cache.get(x);
+//         }
+
+//         let result = func(x); // (**)
+
+//         cache.set(x, result);
+
+//         return result;
+//     };
+// }
+// console.log(worker.slow(2)); // оригинальный метод работает
+// worker.slow = cachingDecorator(worker.slow); // теперь я сделал его кэширующим
+// console.log(worker.slow(3)); // Ошибка - Cannnot read properties of undefined (reading 'someMethod')
+
+// Ошибка возникает в строке (*). Функция пытается получить доступ к this.someMethod и завершается ошибкой. Причина в том,
+// что в строке (**) cacheDecorator вызывает оригинальную функцию как func(x) и она в данном случае получает this = undefined.
+// Получается, что декоратор передаёт вызов оригинальному методу без контекста, поэтому ошибка.
+// Так вот, существует встроенный метод, позволяющий вызывать функцию и явно устанавлиать this. Синтаксис:
+// func.call(context, arg1, arg2, ...) - он запускает функцию func, используя первый аргумент как её контекст this, а последующие
+// как её аргументы.
+// Например ниже, я вызову sayHi в контексте разных объектов
+// function sayHi() {
+//     console.log(`Hi, ${this.name}!`);
+// }
+
+// let user = { name: 'John' };
+// let admin = { name: 'Admin' };
+
+// sayHi.call(user); // Hi, John!
+// sayHi.call(admin); // Hi, Admin!
+
+// // теперь я использую call для вызова функции с контекстом и фразой
+// function say(phrase) {
+//     console.log(phrase + ', ' + this.name);
+// }
+
+// say.call(user, 'Hello'); // Hello, John
+
+// В моём случае я могу использовать call в обёртке для передачи контекста в исходную функцию
+// let worker = {
+//     someMethod() {
+//         return 2;
+//     },
+//     slow(x) {
+//         console.log('Called with x = ' + x);
+//         return x * this.someMethod();
+//     }
+// };
+
+// function cachingDecorator(func) {
+//     let cache = new Map();
+
+//     return function(x) {
+//         if(cache.has(x)) {
+//             return cache.get(x);
+//         }
+
+//         let result = func.call(this, x);
+
+//         cache.set(x, result);
+
+//         return result;
+//     }
+// }
+// worker.slow = cachingDecorator(worker.slow); // делаю кэширующую обёртку
+// console.log(worker.slow(2)); // всё работает
+// console.log(worker.slow(2)); // работает, не вызывает функцию заново, кэшируется
+
+// Переходим к нескольким аргументам. Func.apply
+// Как кешировать метод с несколькими аргументами?
+// let worker = {
+//     slow(min, max) {
+//         return min + max; // здесь может быть тяжелая задача
+//     }
+// };
+// во-первых, как теперь использовать оба аргумента для ключа в коллекции cache? Есть несколько способов:
+// 1 - Реализовать новую или использовать сторонню структуру данных, более универсальную, чем Map.
+// 2 - Использовать вложенные коллекции: cache.set(min) будет Map, которая хранит пару (max, result). Тогда получить
+// result можно, вызвав cache.get(min).get(max).
+// 3 - Соеденить два значения в одно. В моём случае, можно использовать строку "min,max" как ключ для Map. Для гибкости
+// можно передавать хеширующую функцию в декоратор, которая знает, как сделать одно значение из многих. В учебнике говорят,
+// что 3-й вариант хорош для многих практических применений, поэтому буду использовать его.
+// Также мне нужно заменить func.call(this, x) на func.call(this, ...args), чтобы передавать все аргументы, а не только
+// первый.
+
+// let worker = {
+//     slow(min, max) {
+//         console.log(`Called with: min = ${min}, max = ${max}`);
+
+//         return min + max;
+//     },
+// };
+
+// более мощный декоратор
+// function cacheDecorator(func, hash) {
+//     let cache = new Map();
+
+//     return function () {
+//         let key = hash(arguments); // (*)
+
+//         if (cache.has(key)) {
+//             return cache.get(key);
+//         }
+
+//         let result = func.call(this, ...arguments); // (**)
+
+//         cache.set(key, result);
+
+//         return result;
+//     };
+// }
+
+// function hash(args) {
+//     return args[0] + ',' + args[1];
+// }
+
+// worker.slow = cacheDecorator(worker.slow, hash);
+// console.log(worker.slow(3, 5)); // работает
+// console.log(worker.slow(3, 5)); // берёт ответ из кэша
+// в строке (*) вызываю функцию hash, которая создаёт один ключ из arguments. Она делает из (3, 5) ключ "3,5"
+// в более сложных функциях могут понадобиться более сложные функции хеширования
+// затем в строке (**) передаю контекст и все аргументы, полученные обёрткой, не зависимо от их количества в исходную функцию.
+
+// Вместо func.call я мог написать func.apply(this, arguments) - он выполняет func, устанавливая this = context, и принимая
+// в качестве аргументов превдомассив args. Единственным отличием от func.call то, что apply вместо списка аргументов (как call),
+// apply ожидает псевдомассив.
+// Есть небольшая разница - оператор расширения ... позволяет передавать перебираемый объект args в виде списка в call,
+// а apply принимает только псевдомассив args. Эти методы дополняют друг друга - для перебираемых объектов сработает call, а для
+// псевдомассивов - apply.
+// Но если я использую и то, и другое (например массив), то apply будет работать быстрее, потому что движок оптимизирует его
+// работу.
+
+// Передача контекста вместе со всеми аргументами другой функции называется перенаправлением вызова.
+// вот простейший вид такого перенаправления
+// let wrapper = function() {
+//     return func.apply(this, arguments);
+// }; // при вызове wrapper из внешнего кода его не отличить от вызова исходной функции
+
+
+// Заимствование метода 
+
+// function hash(args) {
+//     return args[0] + ',' + args[1]; // всего два аргумента, а что если больше
+// }
+
+// пробую улучшить функцию хеширования
+// function hash(args) {
+//     return args.join(); // не сработает, потому что args это перебираемый объект и псевдомассив, а не реальный массив
+// }
+// Но есть простой способ соединения массива
+// function hash() {
+//     console.log([].join.call(arguments));
+// }
+// // это называется заимствование метода
+// hash(1, 2); // '1,2'
+// я заимствую метод join из обычного массива [], вот так [].join. И использую его, чтобы выполнить в контексте arguments - 
+// [].join.call(arguments) - это работает, потому что алгоритм встроенного метода очень прост. Он технически принимает this 
+// и объединяет this[0], this[1] и т.д. Он намеренно написан так, что допускает любой псевдомассив.
+
+// Задачи после раздела
+
+// Декоратор-шпион
+// function work(a, b) {
+//     return a + b;
+// }
+
+// function spy(func) {
+
+//     function wrapper(...args) { // ...args вместо arguments для хранения реального массива во wrapper
+//         wrapper.calls.push(args);
+//         return func.apply(this, args);
+//     }
+
+//     wrapper.calls = [];
+
+//     return wrapper;
+// }
+
+// work = spy(work);
+
+// console.log(work(1, 2)); // 3
+// console.log(work(4, 3)); // 7
+
+// for (let launch of work.calls) {
+//     console.log(launch);
+// }
+
+// Задерживающий декоратор
+// function f(x) {
+//     console.log(x);
+// }
+
+// function delay(func, delay) {
+//     return function() {
+//         setTimeout(() => func.apply(this, arguments), delay);
+//     }
+// }
+
+// let f2000 = delay(f, 2e3);
+// let f2500 = delay(f, 25e1);
+
+// f2000('test');
+// f2500(15);
+
+// Декоратор debounce
+// function debounce (func, delay) {
+//     debounce.isCoolDown = false;
+
+//     return function () {
+//         if (debounce.isCoolDown) return;
+
+//         func.apply(this, arguments);
+
+//         debounce.isCoolDown = true;
+
+//         setTimeout(() => debounce.isCoolDown = false, delay);
+//     };
+// }
+
+// function alert(x) {
+//     console.log('alert', x);
+// }
+
+// let f = debounce(alert, 1e3);
+// f(1); // выполнится
+// f(2); // не выполнится, потому что не прошло  1000 мс
+// setTimeout(() => f(3), 100); // не выполнится, потому что не прошло  1000 мс
+// setTimeout(() => f(4), 2e3); // выполнится через 2 сек, потому что 2 сек больше 1 сек
+
+// Тормозящий (throttling) декоратор
+// function any() {
+//     console.log('any');
+// }
+
+// function throttle(func, delay) {
+//     let isThrottled = false,
+//         savedArgs, savedThis;
+
+//     function wrapper() {
+//         if (isThrottled) {
+//             savedArgs = arguments;
+//             savedThis = this;
+
+//             return;
+//         }
+
+//         func.apply(this, arguments);
+
+//         isThrottled = true;
+
+//         setTimeout(function () {
+//             isThrottled = false;
+
+//             if (savedArgs) {
+//                 wrapper.apply(savedThis, savedArgs);
+//                 savedArgs = savedThis = null;
+//             }
+//         }, delay);
+//     }
+
+//     return wrapper;
+// }
+
+// let f1e3 = throttle(any, 1e3);
+// f1e3();
+// f1e3();
+// f1e3();
+// f1e3();
+// f1e3();
+// f1e3();
+
+// Привязка контекста к функции

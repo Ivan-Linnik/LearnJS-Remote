@@ -80,14 +80,13 @@ a {
 }
 
 .main__image {
-    flex: 1 1 40%;
+    flex: 1 0 40%;
 
     position: relative;
 
-    max-width: 350px;
-    height: 350px;
+    max-width: 400px;
+    min-height: 450px;
 
-    border-radius: 0.3rem;
     overflow: hidden;
 }
 
@@ -98,7 +97,7 @@ a {
     height: 100%;
 
     object-fit: cover;
-    object-position: 0 0;
+    object-position: 50% 50%;
 }
 
 .footer {

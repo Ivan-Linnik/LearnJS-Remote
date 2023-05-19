@@ -1,4 +1,4 @@
-"use strict"
+"use strict";
 /* некая директива - явная активация старого кода (пишется как строка - в кавычках)
 влючает строгий режим (можно использовать отдельно в функции);
 должна находиться в самом начале исполняемого кода, в противном случае,
@@ -5223,7 +5223,7 @@ let options = {
 // Замыкание
 // Обычно функция запоминает, где родилась, эта информация записывается в специальном свойстве Envoriment. 
 // Это ссылка на лексическое окружение Lexical  Envoriment, в котором она создана. Но когда функция записана при помощи
-// new Function, в еёе Envoriment записывается ссылка не на внешнее лексическое окружение(где она была создана),
+// new Function, в её Envoriment записывается ссылка не на внешнее лексическое окружение(где она была создана),
 // а на глобальное. Поэтому такая функция имеет доступ только к глобальным переменным.
 // Это полезно, ведь имей она доступ к внешним переменным - были бы проблемы с минификаторами кода.
 
@@ -5734,4 +5734,221 @@ let options = {
 // f1e3();
 // f1e3();
 
+
+
 // Привязка контекста к функции
+// При передаче методов объекта в качестве колбэков, как например для setTimeOut, возникает проблема - потеря this.
+// Когда метод передаётся отдельно от объекта - this теряется. Ниже - пример, как это происходи с setTimeout
+// let user = {
+//     name: 'Ivan',
+//     sayHi() {
+//         console.log(`Hi, ${this.name}!`);
+//     },
+// };
+// user.sayHi(); // Hi, Ivan!
+// setTimeout(user.sayHi, 2e3); // Hi, !
+
+// У setTimeout есть особенность: в браузере он устанавливает this = window, получается, что в примере выше я пытаюсь получить
+// window.sayHi - естественно, это undefined.
+
+// 1-е решение - обернуть вызов в анонимную функцию, тем самым создать замыкание:
+// setTimeout(function () {
+//     user.sayHi();
+// }, 1e3); // Hi, Ivan!
+
+// тот же код, но короче:
+// setTimeout(() => user.sayHi(),2e3);
+
+// Но теперь в коде появилась уязвимость - что произойдёт, если до момента срабатывания setTimeout в переменную user будет
+// записано другое значение? - Тогда вызов неожиданно будет совсем не тот, нужно.
+// let user = {
+//     name: 'Ivan',
+//     sayHi() {
+//         console.log(`Hi ${this.name}`);
+//     },
+// };
+
+// setTimeout(() => user.sayHi(), 1e3);
+
+// user = {sayHi() {console.log('Any user');}};
+// Any user
+
+// 2-е решение гарантирует, что это не случится. Нужно использовать bind. Таким образом я привяжу контекст при помощи bind.
+// Bind - это встроенный метод, который позволяет зафиксировать this. Его базовый синтаксис: let boundFunc = func.bind(context);
+// Результатом вызова func.bind(context) является специальный "экзотический объект", который вызывается как функция и прозрачно
+// передаёт вызов в func, при этом устанавливая this = context. Другимим словами, вызов boundFunc подобен вызову func
+// с фиксированным this. Например ниже, funcUser передаёт вызов в func, фиксируя this = user.
+// let user = {
+//     name: 'Ivan',
+// };
+
+// function func() {
+//     console.log(this.name);
+// }
+// let funcUser = func.bind(user); // это связаннй вариант func с фиксированным this=user 
+// funcUser(); // Ivan
+
+// // Все аргументы передаются исходному методу func как есть, например:
+// function funcPhr(phrase) {
+//     console.log(phrase + ', ' + this.name);
+// }
+
+// let funcUs = funcPhr.bind(user); // привязка this к user
+// funcUs('Zdravstvuyte'); // Zdravstvuyte, Ivan
+
+// Теперь попробую с методами объекта
+// let user = {
+//     name: 'Vika',
+//     sayHi() {
+//         console.log(`Salut, ${this.name}`);
+//     },
+// };
+
+// let sayHi = user.sayHi.bind(user); // здесь я беру метод user.sayHi и привязываю его к user
+// теперь sayHi это связанная функция, которая может быть вызвана отдельно или передана setTimeout 
+// sayHi(); // Salut, Vika
+
+// setTimeout(sayHi, 3e3); // Salut, Vika
+
+// bind исправляет только this (user), а аргументы передаются как есть, ещё пример:
+// let user = {
+//     name: 'Choice',
+//     say(phrase) {
+//         console.log(`${phrase}, ${this.name}`);
+//     },
+// };
+
+// let say = user.say.bind(user);
+// say('Hey'); // Hey, Choice
+// say('Opa'); // Opa, Choice
+
+// Есть удобный метод bindAll - он нужен, когда у объекта есть множество методов и я планирую их активно передавать.
+// Для этого я могу привязать контекст для них в цикле, вот так:
+// for (let key in user) {
+//     if (typeof user[key] == 'function') {
+//         user[key] = user[key].bind(user);
+//     }
+// }
+
+
+// Частичное применение
+// можно привязать не только this, но и аргументы, но это делается крайне редко, поэтому я просто прочту этот раздел.
+
+
+// Задачи после раздела
+// Связная функция как метод (что выведет функция)
+// function f() {
+//     console.log(this);
+// }
+
+// let user = {
+//     g: f.bind(null),
+// }
+
+// user.g() // null
+
+
+// Повторный bind
+// function f() {
+//     console.log(this.name);
+// }
+// f = f.bind({ name: 'first' }).bind({ name: 'second' });
+// f(); // first - потому что контекст запоминается во время создания, можно сделать новую привязку, но изменить существующую нельзя.
+
+// Свойство функции после bind
+// function sayHi() {
+//     console.log(`Hi, ${this.name}`);
+// }
+// sayHi.test = 5;
+
+// let bound = sayHi.bind({
+//     name: 'Ivan',
+// });
+
+// console.log(bound.test); // undefined
+
+// Исправить функцию, теряющую this
+// есть функция, вызов которой даёт ошибку - нужно его исправить. Код самой функции не трогать.
+// function askPassword(ok, fail) {
+//     let password = prompt('password?', '');
+
+//     if (password === 'rockstar') ok();
+//     else fail();
+// }
+
+// let user = {
+//     name: 'Vasya',
+//     loginOk() {
+//         console.log(`${this.name} logged in.`)
+//     },
+//     loginFail() {
+//         console.log(`${this.name} failed to log in.`);
+//     },
+// };
+
+// // askPassword(user.loginOk.bind(user), user.loginFail.bind(user));
+// askPassword(() => user.loginOk(), () => user.loginFail()); // - альтернативное решение
+
+// Использование частично применённой функции
+// можно изменять только строку с вызовом функции
+// function askPassword(ok, fail) {
+//     let password = prompt('Password?', '');
+
+//     if (password === 'rockstar') ok();
+//     else fail();
+// }
+
+// let user = {
+//     name: 'Vanya',
+//     login(result) {
+//         console.log(
+//             this.name + (result ? ' logged in' : ' failed to log in')
+//         );
+//     },
+// };
+
+// askPassword(user.login.bind(user, true), user.login.bind(user, false));
+// askPassword(() => user.login(true), () => user.login(false)); // альтернативное решение
+
+
+
+// Повторяем стрелочные функции
+// У стрелочной функции нет this, и я могу это использовать, например для итерации внутри метода объекта.
+// let group = {
+//     title: 'Any group',
+//     students: ['John', 'Pete', 'Alice', 'Patrick'],
+//     showList() {
+//         this.students.forEach(student => {
+//             console.log(this.title + ': ' + student);
+//         }); // this.title имеет здесь такое же значение, как group.title. Если бы я использовал обычную функцию,
+//         // то была бы ошибка, потому что по умолчанию forEach работает с this = undefined, то есть, я бы пытался
+//         // вызвать undefined.title.
+//     }
+// };
+// group.showList();
+
+// Стрелочные функции нельзя использовать в конструкторе new.
+
+// Есть тонкое отличие от bind(this): bind(this) создаёт связанную версию функции, а стрелочная функция ничего не привязывает,
+// она просто берёт this из внешнего лексического окружения.
+
+// Стрелочные функции не имеют arguments
+// Это отлично подходит для декораторов, когда мне нужно пробросить вызов с текущими this и arguments. Пример ниже:
+// defer принимает функцию и возвращает обёртку над ней, которая откладывает вызов на ms:
+// function defer(func, ms) {
+//     return function() {
+//         setTimeout(() => func.apply(this, arguments), ms);
+//     }
+// }
+
+// function sayHi(who) {
+//     console.log(`Hi, ${who}`);
+// }
+
+// let darova = defer(sayHi, 2e3);
+// darova('Ivan');
+// без использования стрелочной функции мне пришлось бы дополнительно объявлять две переменные - для this и arguments, чтобы
+// setTimeout могла их получить
+
+
+// Свойства объекта, их конфигурация

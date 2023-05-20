@@ -5952,3 +5952,144 @@ let options = {
 
 
 // Свойства объекта, их конфигурация
+// Флаги свойств
+// Помимо value свойства объекта имеют 3 специальных свойства, по умолчанию все они true:
+// writable - true - свойство можно изменить, иначе только для чтения,
+// enumerable - true - можно перебирать в циклах, иначе при переборе будет игнорироваться,
+// configurable - true - можно удалять это свойство, а эти атрибуты можно изменять, иначе ничего нельзя.
+// Все эти атрибуты скрыты, но я могу получить и настроить их при помощи Object.getOwnPropertyDescriptor(obj, propertyName).
+// Вернётся объект - так называемый дескриптор свойства, он содержит значение свойства и все его флаги
+// let user = {
+//     name: 'Ivan',
+//     age: 28,
+// };
+
+// let descriptor = Object.getOwnPropertyDescriptor(user, 'name');
+// console.log(descriptor); // {value: 'Ivan', writable: true, enumerable: true, configurable: true}....
+// console.log(
+//     Object.getOwnPropertyDescriptor(user, 'age')
+// );
+
+// Чтобы изменять флаги, я могу использовать метод Object.defineProperty(obj, propertyName, decriptor).
+// Если свойство существует, то defineProperty обновит его флаги,  противном случае - метод создаст новое свойство
+// с указанным значением и флагами. Если какой-либо флаг не указан явно, ему присвоется значение false.
+// let user = {};
+
+// Object.defineProperty(user, "name", {
+//     value: 'Vika',
+//     enumerable: true,
+// });
+
+// console.log(Object.getOwnPropertyDescriptor(user, 'name')); // {value: 'Vika', writable: true, enumerable: false, configurable: false}
+// console.log(JSON.stringify(Object.getOwnPropertyDescriptor(user, 'name'))); // {"value":"Vika","writable":true,"enumerable":false,"configurable":false}
+
+// Примеры
+
+// Только для чтения
+// let user = {
+//     name: 'John',
+// };
+// // сделаю свойство только для чтения
+// Object.defineProperty(user, 'name', {
+//     writable: false,
+// });
+
+// user.name = 'Pete'; // Uncaught TypeError: Cannot assign to read only property 'name' of object '#<Object>'
+// теперь изменить свойсвто можно только обновив флаг, нужно повторно вызвать Object.defineProperty().
+// Ошибки появляются в строгом режиме, в нестрогом режиме они игнорируются, но флаги всё равно не изменяются.
+
+// Тот же пример, но свойсвто создано с нуля
+// let user = {};
+
+// Object.defineProperty(user, 'name', {
+//     value: 'John',
+//     // для нового свойсвта нужно явно указать все флаги, значения которых true
+//     enumerable: true,
+//     configurable: true,
+// });
+
+// console.log(user.name); // John
+// user.name = 'Pete'; // Ошибка
+
+// Неперечислимое свойсвто
+// теперь добавлю собственный метод toString объекту user
+// let user = {
+//     name: 'John',
+//     toString() {
+//         return this.name;
+//     },
+// };
+
+// по умолчанию все свойства выведутся
+// for (let prop in user) {
+//     console.log(prop); // name  toString
+// }
+// если я этого не хочу, то мне нужно установить флаг enumerable: false, вот так
+// Object.defineProperty(user, 'toString', {
+//     enumerable: false,
+// });
+
+// // теперь оно не появится
+// for (let proper in user) {
+//     console.log(proper); // name
+// }
+
+// неперечисляемые свойства также не возвращаются в Object.keys
+// console.log(Object.keys(user)); // >['name']
+
+// Неконфигурируемое свойсвто
+// Флаг неконфигурируемого свойства (configurable: false) иногда предустановлен для некотоорых встроенных объектов и свойств.
+// Неконфигурируемое свойство не может быть удалено. Например свойство Math.PI - неконфигурируемое и только для чтения
+// let descriptor = Object.getOwnPropertyDescriptor(Math, 'PI');
+// console.log(descriptor); 
+
+// Определение свойства как неконфигурируемого - это дорога в один конец. Нельзя отменить это действие, потому что
+// defineProperty не работает с такими свойствами.
+// сделаю свойство навечно запечатанным в константе
+// let user = {};
+
+// Object.defineProperty(user, 'name', {
+//     value: 'Ivan',
+//     configurable: false,
+// });
+
+// // console.log(user.name); // Ivan
+// for (let prop in user) {
+//     console.log(prop); // нихуя, пустая консоль
+// }
+
+// user.name = 'Pete'; // Cannot assign to read only property 'name' of object
+
+// И опять, ошибки появляются только в строгом режиме, в нестрогом режиме все подобные действия над неконфигурируемым
+// свойством просто игнорируются.
+
+// Метод Object.defineProperties(obj, descriptors)
+// он позволяет задать сразу несколько свойств, например
+let user = {};
+
+Object.defineProperties(user, {
+    name: {value: 'Ivan', configurable: true, iterable: true},
+    surname: {value: 'Linnik', writable: false},
+});
+
+// console.log(user); // >{name: 'Ivan', surname: 'Linnik'}
+
+// Метод Object.getOwnPropertyDescriptors
+// позволяет получить получить все десвкрипторы свойств сразу
+// console.log(Object.getOwnPropertyDescriptors(user)); // >{name: {…}, surname: {…}}
+
+// Вместе с Object.defineProperties можно использовать этот метод для клонирования объекта вместе с его флагами
+// let cloneUser = Object.defineProperties({}, Object.getOwnPropertyDescriptors(user));
+
+// console.log(cloneUser); // >{name: 'Ivan', surname: 'Linnik'}
+
+// Обычно при клонировании объекта мы используем присваивание, чтобы скопировать его свойства
+// let clone = {};
+// for (let key in user) {
+//     clone[key] = user[key];
+// }
+// Но это не клонируует флаги. А если мне нужен клон "получше", предпочтительнее использовать defineProperties.
+// Другое отличие в том, что присваивание в цикле игнорирует символьные и неперечисляемые свойства, а
+// Object.getOwnPropertyDescriptors возвращает дескрипторы всех свойств.
+
+// Глобальное запечатывание объекта

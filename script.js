@@ -6065,12 +6065,12 @@ let options = {
 
 // Метод Object.defineProperties(obj, descriptors)
 // он позволяет задать сразу несколько свойств, например
-let user = {};
+// let user = {};
 
-Object.defineProperties(user, {
-    name: {value: 'Ivan', configurable: true, iterable: true},
-    surname: {value: 'Linnik', writable: false},
-});
+// Object.defineProperties(user, {
+//     name: {value: 'Ivan', configurable: true, iterable: true},
+//     surname: {value: 'Linnik', writable: false},
+// });
 
 // console.log(user); // >{name: 'Ivan', surname: 'Linnik'}
 
@@ -6092,4 +6092,148 @@ Object.defineProperties(user, {
 // Другое отличие в том, что присваивание в цикле игнорирует символьные и неперечисляемые свойства, а
 // Object.getOwnPropertyDescriptors возвращает дескрипторы всех свойств.
 
+
 // Глобальное запечатывание объекта
+// Дескрипторы свойств работают на уровне одного конкретного свойства, но ещё есть методы, которые ограничивают доступ ко
+// всему объекту. На практике эти методы используются редко. Поэтому я просто с ними бегло ознакомился.
+
+
+// Свойсвта - геттеры и сеттеры
+// Есть два типа свойств объекта: 1 - свойства-данные - обычные свойства объекта, с которыми я уже работал;
+// 2 - свойсвта-аксессоры - по своей сути, это функции, которые позволяют получить или присвоить значение свойства, но
+// во внешнем коде выглядят они как обычные свойства объекта.
+// При литеральном объявлении объекта они обозначаются, как get и  set.
+// let obj = {
+//     get propName() {
+//         // геттер, срабатывает при чтении obj.propName
+//     },
+//     set propName(value) {
+//         // сеттер, срабатывает при записи obj.popName = value
+//     }
+// };
+// рассмотрю пример: есть объект
+// let user = {
+//     name: 'John',
+//     surname: 'Smith',
+// };
+// теперь добавлю в него свойсвто полного имени fullName. Само собой, я не хочу дублировать код
+// let user = {
+//     name: 'John',
+//     surname: 'Smith',
+//     get fullName() {
+//         return `${this.name} ${this.surname}`;
+//     },
+// };
+// console.log(user.fullName); // John Smith
+// смысл в том, чтобы не вызывать fullName как функцию, а прочитать, как обычное свойство всё, произойдёт за кулисами.
+// на данный момент у fullName  есть только геттер, и если присвоить ему значение произойдёт ошибка:
+// user.fullName = 'Test'; // Cannot set property fullName of #<Object> which has only a getter
+// поэтому
+// let user = {
+//     name: 'John',
+//     surname: 'Smith',
+//     get fullName() {
+//         return `${this.name} ${this.surname}`;
+//     },
+//     set fullName(value) {
+//         [this.name, this.surname] = value.split(' ');
+//     },
+// };
+// console.log(user.fullName); // John Smith
+// user.fullName = 'Ivan Linnik';
+// console.log(user.fullName); // Ivan Linnik
+// console.log(user.name); // Ivan
+// console.log(user.surname); // Linnik
+// в итоге я получил виртуальное свойство, его можно получить и изменить
+
+
+// Дескрипторы свойств доступа
+// Свойства-аксессоры не имеют value и writable, но взамен предлагают get и set. Получается, что дескриптор аксессора
+// может иметь: get, set, enumerable, configurable. Например:
+// let user = {
+//     name: "John",
+//     surname: "Smith"
+// };
+
+// Object.defineProperty(user, 'fullName', {
+//     get () {
+//         return `${this.name} ${this.surname}`;
+//     },
+//     set (value) {
+//         [this.name, this.surname] = value.split(" ");
+//     },
+//     enumerable: true,
+//     configurable: true
+// });
+
+// console.log(user.fullName);
+
+// for (let key of Object.entries(user)) {
+//     console.table(key); 
+// }
+// важно помнить, что свойство объекта может быть либо данными, либо аксессором, при попытке указать например геттер и value
+// будет ошикба.
+
+
+// Умные геттеры сеттеры
+// Геттеры и сеттеры можно использовать как обёрки над реальными значениями свойств, чтобы получить больше контроля над операциями
+// с этими значениями.В примере ниже - я хочу запретить устанавливать короткое имя для user, поэтому буду использовать для проверки
+// сеттер name, а само значение хранить в отдельном свойстве _name:
+// let user = {
+//     get name() {
+//         return this._name;
+//     },
+//     set name(value) {
+//         if (value.length < 4) {
+//             console.log('Need more than 3 letters at name');
+//             return;
+//         }
+//         this._name = value;
+//     },
+// };
+// user.name  = 'Pete';
+// console.log(user.name); // Pete
+
+// for (let key of Object.entries(user)) {
+//     console.table(key); // выведет и name, и _name
+// }
+
+// user.name = 'Tom'; // Need more than 3 letters at name
+
+// Таким образом само имя сохранится в _name, доступ к которому производится только через геттер или сеттер.
+// Технически внешний код всё ещё может получить доступ к имени напрямую через _name, но существует соглашение, которое гласит,
+// что свойства, которые начинаются c символа '_' являются внутренними, и к ним не стоит обращаться за пределами объекта.
+
+// Использование для совместимости
+// У геттеров и сеттеров есть необычное свойство - они позволяют в любой момент взять обычное свойство и изменить его поведение,
+// поменяв на геттер и сеттер.
+// Например, я начал реализовывать объект user:
+// function User(name, age) {
+//     this.name = name;
+//     this.age = age;
+// }
+
+// let ivan = new User('Ivan', 28);
+
+// Но теперь, взамен возраста я хочу использовать дату рождения. Что делать со старым кодом, особенно если я хочу сохранить
+// свойство age, ведь для пользователя свойство вполне нужное? Можно переписать конструктор с использованием геттера для age
+
+// function User(name, birthday) {
+//     this.name = name;
+//     this.birthday = birthday;
+
+//     Object.defineProperty(this, 'age', {
+//         get() {
+//             let todayYear = new Date().getFullYear();
+//             return todayYear  - this.birthday.getFullYear();
+//         }
+//     });
+// }
+
+// let john = new User('John', new Date(1994, 8, 18));
+
+// console.log(john.birthday); // Sun Sep 18 1994 00:00:00 GMT+0400 (Moscow Summer Time)
+// console.log(john.age); // 29
+
+
+// Прототипы, наследование. Прототипное наследование.

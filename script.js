@@ -6237,3 +6237,289 @@ let options = {
 
 
 // Прототипы, наследование. Прототипное наследование.
+// В JS объекты имеют специальное скрытое свойство [[Prototype]], которое либо равно null, либо ссылается на другой объект.
+// Этот объект называется "прототип". Одним из способов задать прототип является свойство __proto__:
+// let animal = {
+//     eats: true,
+// };
+
+// let rabbit = {
+//     jumps: true,
+// };
+
+// console.log(rabbit.eats); // undefined
+
+// rabbit.__proto__ = animal;
+// console.log(rabbit.eats); // true - если я ищу свойство в rabbit, а его там нет, то теперь оно возьмётся из прототипа.
+// Такие свойства называются унаследованными.
+// теперь вызову метод в rabbit:
+// let animal = {
+//     eats: true,
+//     walk() {
+//         console.log('I\'m walking animal');
+//     },
+// };
+
+// let rabbit = {
+//     jumps: true,
+//     __proto__: animal,
+// };
+
+// rabbit.walk(); // I'm walking animal - метод автоматически берётся из прототипа
+
+// Цепочка прототипов может быть длиннее
+// let animal = {
+//     eats: true,
+//     walk() {
+//         console.log('I\'m walking animal.');
+//     },
+// };
+
+// let rabbit = {
+//     jumps: true,
+//     __proto__: animal,
+// };
+
+// let longEar = {
+//     earLength: 10,
+//     __proto__: rabbit,
+// };
+
+// longEar.walk(); // I'm walking animal. - взято из цепочки прототипов
+// console.log(longEar.jumps); // true - взято из rabbit
+
+// НО есть 2 ограничения: 1 - ссылки не могут идти по кругу - иначе будет ошибка. 2 - значение __proto__ может быть только
+// объектом или null, другие типы игнорируются. И ещё - может быть только один __proto__, объект не может
+//  наследоваться от двух других объектов.
+
+// Свойство __proto__ - это исторически обусловленный геттер/сеттер для [[Prototype]]. Современный JS предлагает использовать
+// Object.getPrototypeOf/Object.setPrototypeOf - я рассмотрю эти функции позже.
+
+
+// Операция записи не использует прототип
+
+// Прототип используется только для чтения свойств. Операции записи/удаления работают напрямую с объектом.
+// let animal = {
+//     eats: true,
+//     walk() {
+//         console.log('Main animal walk');
+//     }
+// };
+
+// let rabbit = {
+//     __proto__: animal,
+// };
+
+// rabbit.walk = function() {
+//     console.log('Only rabbit walk');
+// };
+
+// rabbit.walk(); // Only rabbit walk -  теперь вызов walk() находит метод непосредственно в объекте и не использует прототип
+
+// Свойства аксессоры - исключение,т.к. запись в него обрабатывается функцией-сеттером. То есть это фактически вызов функции.
+// По этой причине admin.fullNmae работает корректно в приведёном ниже коде:
+// let user = {
+//     name: 'John',
+//     surname: 'Smith',
+
+//     set fullName(value) {
+//         [this.name, this.surname] = value.split(' ');
+//     },
+//     get fullName() {
+//         return `${this.name} ${this.surname}`;
+//     }
+// };
+
+// let admin = {
+//     __proto__: user,
+//     isAdmin: true,
+// };
+
+// console.log(admin.fullName); // John Smith - здесь свойство имеет геттер в прототипе user, поэтому вызывается он (геттер)
+
+// admin.fullName = 'Ivan Linnik'; // а здесь будет вызван сеттер, который есть в прототипе
+
+// console.log(admin.name); // Ivan
+// console.log(admin.surname); // Linnik
+// console.log(admin); // {isAdmin: true, name: 'Ivan', surname: 'Linnik'} - всё работает
+
+
+// Значение this
+// Прототипы никак не влияют на this. Неважно, где находится метод - в объекте или прототипе. При вызове метода this - 
+// всегда объект перед точкой. Например:
+// let user = {
+//     name: 'default',
+//     sayHi() {
+//         if (this.name === 'default') {
+//             console.log('default');
+//         } else {
+//             console.log(this.name);
+//         }
+//     },
+// };
+
+// let anyUser = {
+//     __proto__: user,
+// };
+
+// let ivan = {
+//     name: 'Ivan',
+//     __proto__: user,
+// };
+
+// anyUser.sayHi(); // default
+// ivan.sayHi(); // Ivan
+
+// В итоге получается, что сами методы являются общими, а состояние объекта - нет.
+
+// Цикл for...in проходит не только по собственным свойствам, но и по унаследованным свойствам объекта.
+// let animal = {
+//     eats: true,
+//     drinks: true,
+// };
+
+// let rabbit = {
+//     jumps: true,
+//     __proto__: animal,
+//     longEar: 10,
+// };
+
+// console.log(Object.keys(rabbit)); // ['jumps'] - возвращает только собственные ключи
+
+// for (let prop in rabbit) {
+//     console.log(prop); // jumps eats - проходит сначала по своим свойствам, затем по унаследованным
+// }
+
+// for (let property of Object.keys(rabbit)) {
+//     console.log(property); // jumps - тоже только свои свойства
+// }
+
+// Также если унаследованные свойства мне не нужны, я могу их отфильтровать при помощи встроенного метода
+// obj.hasOwnProperty(key) - он возвращает true, если у объекта есть собственное, не унаследованное свойство с именем key.
+
+// for (let prop in rabbit) {
+//     let isOwn = rabbit.hasOwnProperty(prop);
+
+//     if (isOwn) {
+//         console.log(`Our: ${prop}`);
+//     } else {
+//         console.log(`Inherited: ${prop}`);
+//     }
+// }
+
+// Важная деталь - я не определял метод hasOwnProperty - он был унаследован у Object.prototype.hasOwnProperty.
+// В цикле он не появился, потому что у него стоит флаг enumerable: false,  как и у других свойств объекта prototype.
+
+
+// Задачи после раздела
+// Работа с прототипами - ответил устно.
+
+// Алгоритм поиска
+// let head = {
+//     glasses: 1
+// };
+
+// let table = {
+//     pen: 3,
+//     __proto__: head,
+// };
+
+// let bed = {
+//     sheet: 1,
+//     pillow: 2,
+//     __proto__: table,
+// };
+
+// let pockets = {
+//     money: 2000,
+//     __proto__: bed,
+// };
+
+// console.log(pockets.pen); // 3
+// console.log(bed.glasses); // 1
+
+// function protoTest() {
+//     return pockets.glasses;
+// }
+
+// function directRequest() {
+//     return head.glasses;
+// }
+
+// function bench(func) {
+//     let start = Date.now();
+
+//     for (let i = 0; i < 1e6; i++) func();
+
+//     return Date.now() - start;
+// }
+
+// console.log(bench(protoTest)); // 4-6
+// console.log(bench(directRequest)); // 9-11
+// При оптимизации движкам неважно, откуда берётся свойство, они достаточно умны, чтобы запомнить, где они его уже нашли.
+// Но на моих тестах поиск в прототипах оказался быстрее даже при очисте кеша и жёсткой перезагрузке.
+
+// Куда будет произведена запись? (в rabbit)
+// let animal = {
+//     eat() {
+//         this.full = true;
+//         return this.full;
+//     }
+// };
+
+// let rabbit = {
+//     __proto__: animal,
+// };
+// console.log(rabbit.eat());
+
+// Почему наедаются оба хомяка?
+// let hamster = {
+//     stomach: [],
+//     eat(food) {
+//         this.stomach.push(food);
+//     },
+// };
+
+// let speedy = {
+//     __proto__: hamster,
+//     stomach: [],
+// };
+
+// let lazy = {
+//     __proto__: hamster,
+//     stomach: [],
+// };
+
+// speedy.eat('apple');
+// console.log(speedy.stomach); // ['apple']
+
+// console.log(lazy.stomach); // []
+// у них один желудок на двоих - таким образом наполняется желудок прототипа
+
+// также можно использовать присваивание вместо push
+// let hamster = {
+//     stomach: [],
+//     eat(food) {
+//         this.stomach = [food];
+//     },
+// };
+
+// let speedy = {
+//     __proto__: hamster,
+// };
+
+// let lazy = {
+//     __proto__: hamster,
+// };
+
+// speedy.eat('apple');
+// console.log(speedy.stomach); // ['apple']
+
+// console.log(lazy.stomach); // []
+
+// это работает, потому что this.stomach= не ищет свойство stomach, занчение записывается непосредственно в объект this.
+// ну и моё решение тоже сработало - я добавил каждому хомяку свой желудок.
+
+
+
+// F.prototype

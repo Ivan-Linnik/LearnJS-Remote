@@ -2,7 +2,7 @@
 /* некая директива - явная активация старого кода (пишется как строка - в кавычках)
 влючает строгий режим (можно использовать отдельно в функции);
 должна находиться в самом начале исполняемого кода, в противном случае,
-директива будет игнорироваться. Над ней могут быть записаны только коммениарии.
+директива будет игнорироваться. Над ней могут быть записаны только комментарии.
 Важно, что по умолчанию в devtools эта директива выключена. Но я могу использовать
 многострочный ввод в консоль, и прописать её первой (при тестировании функций).
 Иногда, когда use strict имеет значение, я могу получить неправильные результаты.
@@ -6088,7 +6088,7 @@ let options = {
 // for (let key in user) {
 //     clone[key] = user[key];
 // }
-// Но это не клонируует флаги. А если мне нужен клон "получше", предпочтительнее использовать defineProperties.
+// Но это не клонирует флаги. А если мне нужен клон "получше", предпочтительнее использовать defineProperties.
 // Другое отличие в том, что присваивание в цикле игнорирует символьные и неперечисляемые свойства, а
 // Object.getOwnPropertyDescriptors возвращает дескрипторы всех свойств.
 
@@ -6782,3 +6782,123 @@ let options = {
 
 
 // Методы прототипов, объекты без свойства __proto__
+// В начале этого раздела, я узнал, что свойство __proto__ считается устаревшим, и должно поддерживаться только браузерами.
+
+// А вот современные методы, их нужно использовать вместо __proto__:
+
+// Object.create(proto, [descriptors]) - создаёт пустой объект со свойством [[Prototype]], указанным как proto и необязательными
+// дескрипторами свойств descriptors.
+
+// Object.getPrototypeOf(obj) - возвращает свойство [[Prototype]] объекта obj.
+
+// Object.setPrototypeOf(obj, proto) - устанавливает свойство [[Prototype]] объекта obj как proto.
+
+// пробую на практике
+// let animal = {
+//     eats: true,
+// };
+
+// let rabbit = Object.create(animal); //  создаю новый объект с прототипом animal
+
+// console.log(rabbit.eats); // true
+// console.log(Object.getPrototypeOf(rabbit) === animal); // true - получаю прототип объекта rabbit и проверяю animal ли это
+
+// Object.setPrototypeOf(rabbit, {}); // заменяю прототип объекта rabbit на {}
+
+// У Object.create есть необязательный второй аргумент - дескриптор свойств, с его помощью я могу добавить дополнительное свойство
+// объекту, вот так:
+// let animal = {
+//     eats: true,
+// } ;
+
+// let rabbit = Object.create(animal, {
+//     jumps: {
+//         value: true,
+//         enumerable: true,
+//     },
+// });
+
+// console.log(rabbit.jumps); // true
+
+// for (let i in rabbit) {
+//     console.log(i); // jumps eats
+// }
+
+// Также я могу использовать Object.create для продвинутого клонирования объекта, более мощного, чем for..in:
+// клон obj с тем же прототипом (с поверхностным копированием свойств):
+// let obj = {
+//     value1: 1,
+//     value2: 2,
+// };
+
+// Object.defineProperty(obj, 'value3', {
+//     value: 3,
+//     writable: true,
+//     enumerable: true,
+//     configurable: true,
+// });
+
+// let clone = Object.create(Object.getPrototypeOf(obj), Object.getOwnPropertyDescriptors(obj));
+// такой вызов создаёт точную копию объекта obj со всеми свойствами (перечисляемыми и неперечисляемыми), геттерами,
+// сеттерами для свойств - и всё это с правильным свойством [[Prototype]].
+
+
+// console.log(clone); // {value1: 1, value2: 2, value3: 3} ...
+// console.dir(clone); // Object - если конкретно, то прототипом является именно obj
+
+// Не следует менять [[Prototype]] существующих объектов, если важна скорость. Обычно устанавливают проттотип при создании объекта,
+// и этот механизм хорошо оптимизирован движком, но вот изменение "на лету" - это сильно медленная операция, которая "ломает"
+// оптимизационные процессы.
+
+
+// "Простейший" объект - здесь описано, как можно при использовании объектов, как ассоциативных массивов случайно получить доступ
+// к __proto__, и вместо значения из пары "ключ-значение" получить не __proto__ как значение, а [Object Object] - собственно
+// сам прототип объекта. Это решается созданием объекта через Object.create(null), но тогда у такого объекта не будет никаких
+// встроенных методов, например toString, и их придётся задавать вручную, а ещё можно использовать Map.
+
+
+// Задачи после раздела
+
+// Добавьте toString в словарь
+// let dictionary = Object.create(null);
+
+// Object.defineProperty(dictionary, 'toString', {
+//     configurable: true,
+//     writable: true,
+//     enumerable: false,
+//     value () {
+//         return Object.keys(this).join(', ');
+//     },
+// });
+
+// dictionary.apple = 'Apple';
+// dictionary.__proto__ = 'test';
+
+// for (let key in dictionary) {
+//     console.log(key); // тут всё ок
+// }
+
+// console.log(String(dictionary));
+
+
+// Разница между вызовами
+// function Rabbit(name) {
+//     this.name = name;
+//     this.type = 'animal';
+// }
+
+// Rabbit.prototype.sayHi = function() {
+//     console.log(`Hello, I\'m ${this.name}.`);
+// };
+
+// let rabbitTod = new Rabbit('Tod');
+
+// все эти вызовы делают одно и то же?
+// rabbitTod.sayHi(); // вызывает метод прямо из объекта rabbitTod, this == rabbitTod
+// Rabbit.prototype.sayHi(); // this == Rabbit.prototype, поэтому функция вернёт undefined. И внизу везде тоже.
+// Object.getPrototypeOf(rabbitTod).sayHi();
+// rabbitTod.__proto__.sayHi();
+
+
+// Классы
+// Класс: базовый синтаксис

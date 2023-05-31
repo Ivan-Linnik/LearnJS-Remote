@@ -102,6 +102,20 @@ a {
     object-position: 50% 50%;
 }
 
+@keyframes hueRotate {
+    from {
+        filter: hue-rotate(0deg);
+    }
+
+    to {
+        filter: hue-rotate(360deg);
+    }
+}
+
+.main__image img:hover {
+    animation: hueRotate 10s infinite;
+}
+
 .footer {
     min-height: 10vh;
 

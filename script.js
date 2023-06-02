@@ -6902,3 +6902,243 @@ let options = {
 
 // Классы
 // Класс: базовый синтаксис
+
+// В ООП класс - это раширяемый шаблон кода для создания объектов, который устанавливает в них начальные значения (свойства)
+// и реализацию поведения (методы).
+// Я уже умею создавать оббъекты при помощи конструктора new, но в JS есть конструкция 'class', которая предоставляет новые
+// возможности, полезные для ООП.
+
+// Синтаксис class (базовый)
+// class MyClass {
+//     // методы класса
+//     constructor() {... }
+//     method1() {... }
+//     method2() {... }
+//     method3() {... }
+//     ...
+// }
+// Затем используется вызов new Class для создания нового объекта со всеми перечисленными методами. При этом автоматически
+// вызывается метод constructor(), в нём я могу инициализировать объект, например:
+
+// class User {
+//     constructor(name) {
+//         this.name = name;
+//     }
+
+//     sayHi() {
+//         console.log(`Hi, my name is ${this.name}`);
+//     }
+// }
+
+// использование
+// let user = new User('Иван'); // здесь сначала создаётся новый объект, потом constructor() запускаетя с данным аргументом
+// и сохраняет его в this.name
+
+// user.sayHi(); // Hi, my name is Иван
+
+// Итак, класс, это не полностью языковая сущность. В JS класс - это разновидность функции. Посмотрю ещё раз:
+// class User {
+//     constructor(name) {this.name = name;}
+
+//     sayAny() {console.log(this.name);}
+// }
+// console.log(typeof User); // function
+
+// Вот, что на самом деле делает конструкция class User {}:
+// 1. Создаёт функцию с именем User, которая становится результатом объявления класса. Код функции берётся из метода constructor,
+// он будет пустой, если такого метода нет.
+// 2. Сохраняет все методы (типа sayHi()) в User.prototype.
+
+// При вызове метода объекта new User  методы будут взяты из прототипа, как это описано в главе F.prototype. Таким образом
+// объекты User имеют доступ к методам класса. Можно это проверить:
+// class User {
+//     constructor(name) { this.name = name; }
+
+//     sayAny() { console.log(this.name); }
+// }
+// // класс - это функция
+// console.log(typeof User); // function
+
+// // или если точнее - это метод constructor
+// console.log(User === User.prototype.constructor); // true
+
+// // методы находятся в User.prototype:
+// console.log(User.prototype.sayAny); // ƒ sayAny() { console.log(this.name); }
+
+// // в прототипе ровно два метода
+// console.log(User.prototype); // {constructor: ƒ, sayAny: ƒ}
+
+
+// Не просто синтаксический сахар
+// иногда говорят, что классы - это просто синтаксический сахар, потому что можно сделать всё тоже самое без них, вот так:
+// function User(name) { this.name = name; }
+
+// добавляю метод в прототип
+// User.prototype.sayAny = function () { console.log(this.name) };
+
+// смотрю, что получилось:
+// let user = new User('Ivan');
+// user.sayAny(); // Ivan
+
+
+// И да, результат этого кода очень похож, но есть отличия:
+// 1. Во-первых, функция, созданная при помощи класса помечена специальным внутренним свойством [[isClassConstructor]]: true - 
+// поэтому это не тоже самое, что создавать её вручную.
+// В отличие от обычных функций, констуктор класса не может быть вызван без new. Кроме того, строковое представление констуктора
+// класса в большинстве движков начинается с class.
+// 2. Методы класса являются неперечислимыми. Определение класса устанавливает флаг enumerable: false для всех методов в prototype.
+// И это хорошо, потому что в большинстве случаев мне не нужно перебирать все методы объекта, когда я прохожу по нему for..in.
+// 3. Классы всегда используют  use strict, то есть код в них всегда находится в строгом режиме.
+
+// Class Expression
+// Классы, как и функции можно определять внутри другого выражения, передавать, присваивать, возвращать и т.д.
+// Пример по аналоги с FE:
+// let User = class {
+//     sayHi() {
+//         console.log('Hello');
+//     }
+// }
+
+// Аналогично с  NFE Class Expression может иметь имя, но оно будет видно только внутри класса:
+// let User = class MyClass {
+//     sayHi() {
+//         console.log(MyClass); // имя MyClass видно только внутри класса
+//     }
+// }
+
+// new User().sayHi(); // выводит определение MyClass (видно даже комментарий выше, потому что он внутри класса)
+
+// console.log(MyClass); // MyClass is not defined - не видно за пределами класса
+
+// Я могу динамически создавать классы по запросу
+// function makeClass (phrase) {
+//     // объявляю класс и возвращаю его
+//     return class {
+//         sayHi() {
+//             console.log(phrase);
+//         };
+//     };
+// }
+
+// создаю новый класс
+// let User = makeClass('Hello phrase');
+
+// new User().sayHi(); // Hello phrase
+
+
+// Геттеры/сеттеры, другие сокращения
+// Как и в литеральных объектах в классах можно объявлять вычисляемые свойства типа геттеров/сеттеров и т.д., например:
+// class User {
+//     constructor(name) {
+//         // вызывает сеттер
+//         this.name = name;
+//     }
+
+//     get name() {
+//         return this._name;
+//     }
+
+//     set name(value) {
+//         if (value.length < 4) {
+//             console.log('Name is too short');
+//             return;
+//         }
+
+//         this._name = value;
+//     }
+// }
+
+// let user = new User('Thomas');
+// console.log(user.name); // Thomas
+
+// let user2 = new User('Tom'); // Name is too short
+
+// console.log(user2.name); // undefined
+
+// При объявлении класса геттеры/сеттеры создаются на User.prototype, вот так:
+// Object.defineProperties(User.prototype, {
+//     name: {
+//         get() {
+//             return this._name;
+//         },
+//         set(name) {
+//             //...
+//         }
+//     }
+// });
+
+// Пример с вычисляемым свойством в скобках [...]
+// class User {
+//     ['say' + 'Hi'] () {
+//         console.log('Hi!');
+//     }
+// }
+
+// new User().sayHi(); // Hi!
+
+
+// Свойства классов
+// старым свойствам может понадобиться полифил, потому что возможность добавлена не так давно.
+// Ранее у класса User были только методы, теперь добавлю им свойство:
+// class User {
+//     name = 'Anonim';
+
+//     sayHi() {
+//         console.log(`Hello, ${this.name}`);
+//     }
+// }
+
+// new User().sayHi(); // Hello, Anonim
+
+// Получается , что свойство name не устанавливается в прототип (User.prototype). Вместо этого оно создаётся оператором new
+// перед запуском конструктора, а это именно свойство объекта.
+
+
+// Задачи после раздела
+
+// Перепишите класс
+// ```class Clock {
+//     constructor({ template }) {
+//         this.template = template;
+//     }
+
+//     render() {
+//         let date = new Date();
+
+//         let hours = date.getHours();
+//         if (hours < 10) hours = '0' + hours;
+
+//         let mins = date.getMinutes();
+//         if (mins < 10) mins = '0' + mins;
+
+//         let secs = date.getSeconds();
+//         if (secs < 10) secs = '0' + secs;
+
+//         let output = this.template
+//             .replace('h', hours)
+//             .replace('m', mins)
+//             .replace('s', secs);
+
+//         console.clear(); // я добавил, чтобы не плодить сотни строк в консоли
+//         console.log(output);
+//     }
+
+//     stop() {
+//         clearInterval(this.timer);
+//         console.log('Timer is stopped.')
+//     };
+
+//     start() {
+//         this.render();
+//         this.timer = setInterval(() => this.render(), 1000);
+//     };
+
+// }
+
+// let clock = new Clock({ template: 'h:m:s' });
+// clock.start();
+
+// setTimeout(() => clock.stop(), 10e3);```
+
+
+// Наследование классов

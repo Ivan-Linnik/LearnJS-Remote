@@ -6917,7 +6917,7 @@ let options = {
 //     method3() {... }
 //     ...
 // }
-// Затем используется вызов new Class для создания нового объекта со всеми перечисленными методами. При этом автоматически
+// Затем используется вызов new ClassName для создания нового объекта со всеми перечисленными методами. При этом автоматически
 // вызывается метод constructor(), в нём я могу инициализировать объект, например:
 
 // class User {
@@ -6988,7 +6988,7 @@ let options = {
 // класса в большинстве движков начинается с class.
 // 2. Методы класса являются неперечислимыми. Определение класса устанавливает флаг enumerable: false для всех методов в prototype.
 // И это хорошо, потому что в большинстве случаев мне не нужно перебирать все методы объекта, когда я прохожу по нему for..in.
-// 3. Классы всегда используют  use strict, то есть код в них всегда находится в строгом режиме.
+// 3. Классы всегда используют use strict, то есть код в них всегда находится в строгом режиме.
 
 // Class Expression
 // Классы, как и функции можно определять внутри другого выражения, передавать, присваивать, возвращать и т.д.
@@ -6999,7 +6999,7 @@ let options = {
 //     }
 // }
 
-// Аналогично с  NFE Class Expression может иметь имя, но оно будет видно только внутри класса:
+// Аналогично с NFE Class Expression может иметь имя, но оно будет видно только внутри класса:
 // let User = class MyClass {
 //     sayHi() {
 //         console.log(MyClass); // имя MyClass видно только внутри класса
@@ -7054,6 +7054,7 @@ let options = {
 // let user2 = new User('Tom'); // Name is too short
 
 // console.log(user2.name); // undefined
+// console.log(user2); // User... -  но сам объект создался (интересно)
 
 // При объявлении класса геттеры/сеттеры создаются на User.prototype, вот так:
 // Object.defineProperties(User.prototype, {
@@ -7078,7 +7079,7 @@ let options = {
 
 
 // Свойства классов
-// старым свойствам может понадобиться полифил, потому что возможность добавлена не так давно.
+// старым браузерам может понадобиться полифил, потому что возможность добавлена не так давно.
 // Ранее у класса User были только методы, теперь добавлю им свойство:
 // class User {
 //     name = 'Anonim';
@@ -7090,14 +7091,14 @@ let options = {
 
 // new User().sayHi(); // Hello, Anonim
 
-// Получается , что свойство name не устанавливается в прототип (User.prototype). Вместо этого оно создаётся оператором new
+// Получается, что свойство name не устанавливается в прототип (User.prototype). Вместо этого оно создаётся оператором new
 // перед запуском конструктора, а это именно свойство объекта.
 
 
 // Задачи после раздела
 
 // Перепишите класс
-// ```class Clock {
+// class Clock {
 //     constructor({ template }) {
 //         this.template = template;
 //     }
@@ -7138,7 +7139,282 @@ let options = {
 // let clock = new Clock({ template: 'h:m:s' });
 // clock.start();
 
-// setTimeout(() => clock.stop(), 10e3);```
+// setTimeout(() => clock.stop(), 10e3);
 
 
 // Наследование классов
+// наследование классов - это способ расширения одного класса другим классом. Я могу добавить новый функционал уже существующему.
+
+// Ключевое слово "extends"
+
+// допустим, у меня есть класс животного
+// class Animal {
+//     constructor(name) {
+//         this.speed = 0;
+//         this.name = name;
+//     }
+//     run(speed) {
+//         this.speed = speed;
+//         console.log(`${this.name} runs with speed ${this.speed} km/h.`);
+//     }
+//     stop() {
+//         this.speed = 0;
+//         console.log(`${this.name} stands still.`);
+//     }
+// }
+
+// let animal = new Animal('My pet');
+
+// и я бы хотел создать ещё один класс Rabbit. Он должен быть основан на Animal. Синтаксис для расширения следующий:
+// class Child extends Parent.
+// Пробую:
+// class Rabbit extends Animal {
+//     hide() {
+//         console.log(`${this.name} hiding from anyone.`);
+//     }
+// }
+
+// let rabbit = new Rabbit('Roger');
+// rabbit.run(30); // Roger runs with speed 30 km/h.
+// rabbit.stop(); // Roger stands still.
+// rabbit.hide(); // Roger hiding from anyone.
+
+// Ключевое свово extends работает по механике прототипов, оно устанавливает Rabbit.prototype.[[Prototype]] в Animal.prototype.
+// Таким образом, если метода не оказалось в Rabbit.prototype, он возьмётся из Animal.prototype.
+
+// После extends разрешены любые выражения, например можно вызвать функцию, которая генерирует родительский класс.
+// function f(phrase) {
+//     return class {
+//         sayHi() {
+//             console.log(phrase);
+//         }
+//     }
+// }
+
+// class User extends f('Zdravstvuyte') {}
+
+// new User().sayHi(); // Zdravstvuyte
+
+// здесь класс User наследует от результата выова f('Zdravstvuyte'). Это может быть полезно для продвинутых приёмов проектирования,
+// где я могу использовать функции для генерации классов в зависимости от многих условий и затем наследовать их.
+
+
+// Переопределение методов
+// по умолчанию, все методы, не указанные в классе Rabbit берутся из родителя как есть. Но если я укажу собственный метод в классе
+// Rabbit, то он будет использован вместо родительского. Обычно не нужно полностью заменять родительский метод, скорее создать новый
+// на его основе - возможно расширить или частично изменить функционал. У классов для этого есть ключевое слово 'super':
+// super.method(...) - вызывает родительский метод;
+// super(...) - для вызова родительского конструктора (работает только внутри моего конструктора).
+
+// пусть кролик автоматически прячется при остановке
+
+// class Animal {
+//     constructor(name) {
+//         this.speed = 0;
+//         this.name = name;
+//     }
+//     run(speed) {
+//         this.speed = speed;
+//         console.log(`${this.name} runs with speed ${this.speed} km/h.`);
+//     }
+//     stop() {
+//         this.speed = 0;
+//         console.log(`${this.name} stands still.`);
+//     }
+// }
+
+// class Rabbit extends Animal {
+//     hide() {
+//         console.log(`${this.name} is hiding from anyone.`);
+//     }
+//     // и теперь внимание!:
+//     stop() {
+//         super.stop(); // вызываю родительский метод
+//         this.hide(); // и затем hide
+//     }
+// }
+
+// let rabbit = new Rabbit('Some rabbit');
+// rabbit.run(50); // Some rabbit runs with speed 50 km/h.
+// rabbit.stop(); // Some rabbit stands still. - и затем - Some rabbit is hiding from anyone.
+
+// теперь у класса Rabbit есть свой собственный метод stop, который вызывает родительский super.stop() в процессе выполнения.
+
+// У стрелочных функций нет super, он берётся из внешней функции:
+// class Rabbit extends Animal {
+//     stop() {
+//         setTimeout(() => super.stop(), 1e3);
+//     }
+// }
+// new Rabbit('Rabbit').stop(); // Rabbit stands still. - выведено через 1 секунду
+// в этом примере значение super стрелочной функции то же, что и в stop(), поэтому всё работает.
+
+// А если в этом же примере указать обычную функцию, то будет ошибка:
+// class Rabbit extends Animal {
+//     stop() {
+//         setTimeout(function () { super.stop() }, 1e3); // 'super' keyword unexpected here
+//     }
+// }
+
+// Переопределение конструктора
+// согласно спецификации - если класс расширяет другой класс и не имеет конструктора, то автоматически создаётся такой пустой
+// конструктор. То есть дочерний класс будет просто вызывать конструктор родительского класса, пока я не создам свой конструктор
+// для дочернего класса.
+
+// class Animal {
+//     constructor(name) {
+//         this.name = name;
+//         this.speed = 0;
+//     }
+//     run(speed) {
+//         this.speed = speed;
+//         console.log(`${this.name} runs with speed ${this.speed} km/h.`);
+//     }
+//     stop() {
+//         this.speed = 0;
+//         console.log(`${this.name} stands still.`);
+//     }
+// }
+
+// Что сразу ВАЖНО отметить: конструкторы в наследуемых классах должны обязательно вызывать super(...), и делать это
+// перед использованием this!
+// Потому что в JS есть отличие между функцией наследующего класса и всеми остальными. В наследующем классе соответствующая
+// функция-конструктор помечена специальным внутренним свойством [[ConstructorKind]]: 'derived'.
+// Если коротко, то когда я создаю собственный конструктор, я должен вызвать super(...) до использования this, в противном случае объект для this не будет создан и я получу ошибку. Поэтому ниже делаю правильно:
+
+// class Rabbit extends Animal {
+//     constructor(name, earLength) {
+//         super(name);
+//         this.earLength = earLength;
+//     }
+// }
+
+// let rabbit = new Rabbit('Roger', 15);
+// console.log(rabbit.name); // Roger
+// rabbit.run(20); // Roger runs with speed 20 km/h.
+// console.log(rabbit.earLength); // 15
+
+
+// Переопределение полей класса
+// я могу переопределять не только методы, но и поля класса
+// class Animal {
+//     name = 'Animal';
+
+//     constructor(){
+//         console.log(this.name);
+//     }
+// }
+
+// class Rabbit extends Animal {
+//     name = 'Rabbit';
+// }
+
+// new Animal(); // Animal
+// new Rabbit(); // Animal - так происходит, потому что в Rabbit нет собственного конструктора, и используется конструктор Animal
+
+// Другими словами - родительский конструктор всегда использует своё собственное значение поля, а не определённое.
+
+// Теперь тот же код, но вместо this.name  я буду вызывать метод this.showName():
+// class Animal {
+//     showName() {
+//         // вместо this.name = 'Animal'
+//         console.log('Animal');
+//     }
+
+//     constructor() {
+//         // вместо console.log(this.name)
+//         this.showName();
+//     }
+// }
+
+// class Rabbit extends Animal {
+//     showName() {
+//         console.log('Rabbit');
+//     }
+// }
+
+// new Animal; // Animal
+// new Rabbit(); // Rabbit
+// причина, по которой это работает - порядок инициализации полей. Это и есть особенность JS. Подробнее об этом в книге.
+
+
+// Задачи после раздела
+
+// Ошибкасоздания экземпляра класса
+// (пишу уже исправленный код)
+
+// class Animal {
+//     constructor(name) {
+//         this.name = name;
+//     }
+// }
+
+// class Rabbit extends Animal {
+//     constructor(name) {
+//         super(name);
+//         this.created = Date.now();
+//     }
+// }
+
+// let rabbit = new Rabbit('Roger');
+// console.log(rabbit.name); // Roger
+// console.log(rabbit.created); // 1685786247759 - вернул таймстамп - работает
+
+// причина была в том, что у Rabbit усть свой конструктор, но он использует свойство из конструктора Animal, и нужно было
+// использовать super(это свойство) перед использованием this самого Rabbit.
+
+// Улучшеные часы
+class Clock {
+    constructor({ template }) {
+        this.template = template;
+    }
+    render() {
+        let date = new Date();
+
+        let hours = date.getHours();
+        if (hours < 10) hours = '0' + hours;
+
+        let mins = date.getMinutes();
+        if (mins < 10) mins = '0' + mins;
+
+        let secs = date.getSeconds();
+        if (secs < 10) secs = '0' + secs;
+
+        let output = this.template
+            .replace('h', hours)
+            .replace('m', mins)
+            .replace('s', secs);
+
+        console.clear();
+        console.log(output);
+
+        return output;
+    }
+
+    start() {
+        this.render();
+        this.timer = setInterval(() => this.render(), 1e3);
+    }
+
+    stop() {
+        clearInterval(this.timer);
+        console.log(`Timer was stopped with ${this.render()}`);
+    }
+}
+
+class ExtendClock extends Clock {
+    constructor(options) {
+        super(options);
+        let { precision = 2e3 } = options;
+        this.precision = precision;
+    }
+
+    start() {
+        this.render();
+        this.timer = setInterval(() => this.render(), this.precision);
+    }
+}
+
+let extClock = new ExtendClock({ template: 'h:m:s' });
+extClock.start();
+extClock.stop()

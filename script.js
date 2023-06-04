@@ -6905,7 +6905,7 @@ let options = {
 
 // В ООП класс - это раширяемый шаблон кода для создания объектов, который устанавливает в них начальные значения (свойства)
 // и реализацию поведения (методы).
-// Я уже умею создавать оббъекты при помощи конструктора new, но в JS есть конструкция 'class', которая предоставляет новые
+// Я уже умею создавать объекты при помощи конструктора new, но в JS есть конструкция 'class', которая предоставляет новые
 // возможности, полезные для ООП.
 
 // Синтаксис class (базовый)
@@ -6979,7 +6979,6 @@ let options = {
 // смотрю, что получилось:
 // let user = new User('Ivan');
 // user.sayAny(); // Ivan
-
 
 // И да, результат этого кода очень похож, но есть отличия:
 // 1. Во-первых, функция, созданная при помощи класса помечена специальным внутренним свойством [[isClassConstructor]]: true - 
@@ -7195,14 +7194,14 @@ let options = {
 
 // new User().sayHi(); // Zdravstvuyte
 
-// здесь класс User наследует от результата выова f('Zdravstvuyte'). Это может быть полезно для продвинутых приёмов проектирования,
+// здесь класс User наследует от результата вызова f('Zdravstvuyte'). Это может быть полезно для продвинутых приёмов проектирования,
 // где я могу использовать функции для генерации классов в зависимости от многих условий и затем наследовать их.
 
 
 // Переопределение методов
 // по умолчанию, все методы, не указанные в классе Rabbit берутся из родителя как есть. Но если я укажу собственный метод в классе
 // Rabbit, то он будет использован вместо родительского. Обычно не нужно полностью заменять родительский метод, скорее создать новый
-// на его основе - возможно расширить или частично изменить функционал. У классов для этого есть ключевое слово 'super':
+// на его основе, возможно расширить или частично изменить функционал. У классов для этого есть ключевое слово 'super':
 // super.method(...) - вызывает родительский метод;
 // super(...) - для вызова родительского конструктора (работает только внутри моего конструктора).
 
@@ -7280,7 +7279,8 @@ let options = {
 // перед использованием this!
 // Потому что в JS есть отличие между функцией наследующего класса и всеми остальными. В наследующем классе соответствующая
 // функция-конструктор помечена специальным внутренним свойством [[ConstructorKind]]: 'derived'.
-// Если коротко, то когда я создаю собственный конструктор, я должен вызвать super(...) до использования this, в противном случае объект для this не будет создан и я получу ошибку. Поэтому ниже делаю правильно:
+// Если коротко, то когда я создаю собственный конструктор, я должен вызвать super(...) до использования this, в противном случае
+// объект для this не будет создан и я получу ошибку. Поэтому ниже делаю сразу правильно:
 
 // class Rabbit extends Animal {
 //     constructor(name, earLength) {
@@ -7340,7 +7340,7 @@ let options = {
 
 // Задачи после раздела
 
-// Ошибкасоздания экземпляра класса
+// Ошибка создания экземпляра класса
 // (пишу уже исправленный код)
 
 // class Animal {
@@ -7364,57 +7364,227 @@ let options = {
 // использовать super(это свойство) перед использованием this самого Rabbit.
 
 // Улучшеные часы
-class Clock {
-    constructor({ template }) {
-        this.template = template;
-    }
-    render() {
-        let date = new Date();
+// class Clock {
+//     constructor({ template }) {
+//         this.template = template;
+//     }
+//     render() {
+//         let date = new Date();
 
-        let hours = date.getHours();
-        if (hours < 10) hours = '0' + hours;
+//         let hours = date.getHours();
+//         if (hours < 10) hours = '0' + hours;
 
-        let mins = date.getMinutes();
-        if (mins < 10) mins = '0' + mins;
+//         let mins = date.getMinutes();
+//         if (mins < 10) mins = '0' + mins;
 
-        let secs = date.getSeconds();
-        if (secs < 10) secs = '0' + secs;
+//         let secs = date.getSeconds();
+//         if (secs < 10) secs = '0' + secs;
 
-        let output = this.template
-            .replace('h', hours)
-            .replace('m', mins)
-            .replace('s', secs);
+//         let output = this.template
+//             .replace('h', hours)
+//             .replace('m', mins)
+//             .replace('s', secs);
 
-        console.clear();
-        console.log(output);
+//         console.clear();
+//         console.log(output);
 
-        return output;
-    }
+//         return output;
+//     }
 
-    start() {
-        this.render();
-        this.timer = setInterval(() => this.render(), 1e3);
-    }
+//     start() {
+//         this.render();
+//         this.timer = setInterval(() => this.render(), 1e3);
+//     }
 
-    stop() {
-        clearInterval(this.timer);
-        console.log(`Timer was stopped with ${this.render()}`);
-    }
-}
+//     stop() {
+//         clearInterval(this.timer);
+//         console.log(`Timer was stopped with ${this.render()}`);
+//     }
+// }
 
-class ExtendClock extends Clock {
-    constructor(options) {
-        super(options);
-        let { precision = 2e3 } = options;
-        this.precision = precision;
-    }
+// class ExtendClock extends Clock {
+//     constructor(options) {
+//         super(options);
+//         let { precision = 2e3 } = options;
+//         this.precision = precision;
+//     }
 
-    start() {
-        this.render();
-        this.timer = setInterval(() => this.render(), this.precision);
-    }
-}
+//     start() {
+//         this.render();
+//         this.timer = setInterval(() => this.render(), this.precision);
+//     }
+// }
 
-let extClock = new ExtendClock({ template: 'h:m:s' });
-extClock.start();
-extClock.stop()
+// let extClock = new ExtendClock({ template: 'h:m:s' });
+// extClock.start();
+// extClock.stop();
+
+
+// Статические свойства и методы классов
+// я также могу присвоить  метод самому классу - такой метод будет называться статическим. В объявлении класса они добавляются
+// при помощи ключевого слова static, например:
+// class User {
+//     static staticMethod() {
+//         console.log(this === User);
+//     }
+// }
+// User.staticMethod(); // true
+
+// Это фактически тоже самое, что и присвоить метод как свойство функции
+// class User { }
+
+// User.staticMethod = function () {
+//     console.log(this === User)
+// }
+
+// User.staticMethod(); // true
+
+// Значением this при вызове User.staticMethod является сам конструктор класса User (правило "объект до точки").
+// console.log(User.prototype); // constructor: class User
+
+// Обычно статические методы используют для реализации функций, принадлежащих классу целиком, вообще. При этом, не относящимися
+// к каким-то отдельным объектам. Например: есть объекты статей, и нужна функция для их сравнения. Естественное решение - 
+// сделать для этого статический метод Article.compare:
+
+// class Article {
+//     constructor(title, date) {
+//         this.title = title;
+//         this.date = date;
+//     }
+
+//     static compare(articleA, articleB) {
+//         return articleA.date - articleB.date;
+//     }
+// }
+
+// использование
+// let articles = [
+//     new Article('HTML', new Date(2021, 1, 1)),
+//     new Article('CSS', new Date(2024, 2, 4)),
+//     new Article('JS', new Date(2023, 3, 15))
+// ];
+
+// for (let one of articles) { // до
+//     console.log(one.title); // HTML, CSS, JS
+// }
+// console.log('--------------------------')
+
+// articles.sort(Article.compare);
+
+// for (let one of articles) { // после
+//     console.log(one.title); // HTML, JS, CSS
+// }
+// В этом примере метод Article.compare стоит "над" статьями, как средство их сравнения. Это не метод отдельной статьи,
+// а всего класса целиком.
+
+// Другой пример: так называемый "фабричный" метод. Допустим, мне нужно несколько способов создания статьи:
+// 1. Создание через заданные параметры title, date. 2. Создание пустой статьи с сегодняшней датой. 3. Как-то ещё.
+// Первый способ может быть реализован через конструктор, а для второго подойдёт статический метод класса, например:
+// class Article {
+//     constructor(title, date) {
+//         this.title = title;
+//         this.date = date;
+//     }
+//     // вот тот самый статический метод
+//     static createToday() {
+//         // держу в уме, что this = Article
+//         return new this('Сегодняшний дайджест', new Date());
+//     }
+// }
+
+// let article = Article.createToday();
+// console.log(article.title); // Сегодняшний дайджест
+
+// Теперь каждый раз, когда мне нужно создать сегодняшний дайджест, мне нужно вызывать Article.createToday(). Ещё раз - 
+// это не метод отдельной статьи, это метод всего класса в целом.
+
+// Статические методы также используются в классах, относящихся к базам данных, для поиска/хранения/удаления вхождений
+// в базу данных, например:
+
+// предположим, что Article - это специальный класс для управления статьями
+// тогда статический метод для удаления статьи по id:
+// Article.remove({ id: 12345 });
+
+// Статические методы недоступны для отдельных объектов!
+// Статические методы могут вызываться для классов, но не для отдельных объектов. Например, такой код не будет работать:
+// article.createToday(); // ошибка - article.createToday is not a function
+
+
+
+// Статические свойства (новая возможность)
+// они выглядят, как свойства класса, но перед ними также указывается ключевое слово static:
+// class Article {
+//     static publisher = 'Ivan Linnik';
+// }
+// console.log(Article.publisher); // Ivan Linnik
+
+// это тоже самое, что и прямое присваивание: Article.publisher = 'Ivan Linnik'
+
+
+// Наследование статических свойств и методов
+// статические свойства и методы наследуются. Пример ниже:
+// class Animal {
+
+//     constructor(name, speed) {
+//         this.name = name;
+//         this.speed = speed;
+//     }
+
+//     run(speed = 0) {
+//         this.speed += speed;
+//         console.log(`${this.name} runs with speed ${this.speed} km/h.`);
+//     }
+
+//     static compare(animalA, animalB) {
+//         return animalA.speed - animalB.speed;
+//     }
+// }
+
+// // наследует от Animal
+// class Rabbit extends Animal {
+//     hide() {
+//         console.log(`${this.name} is hiding.`);
+//     }
+// }
+
+// let rabbits = [
+//     new Rabbit('1 Rabbit', 25),
+//     new Rabbit('2 Rabbit', 20),
+// ];
+
+// for (let rab of rabbits) {
+//     console.log(rab.name); // 1 Rabbit  2 Rabbit
+// }
+
+// rabbits.sort(Rabbit.compare); // здесь я вызвал Rabbit.compare, но при этом был унаследован Animal.compare
+
+// for (let rab of rabbits) {
+//     console.log(rab.name); // 2 Rabbit  1 Rabbit
+// }
+
+// rabbits[0].run(); // 2 Rabbit runs with speed 20 km/h.
+
+// Всё это работает снова с использованием прототипов. Extends даёт Rabbit ссылку [[Proptotype]] на Animal.
+
+// Так что Rabbit extends Animal создаёт две ссылки на прототип:
+// 1. Функция Rabbit прототипно наследует от функции Animal.
+// 2. Rabbit.prototype прототипно наследует от Animal.prototype.
+
+// В результате - наследование работает как для обычных, так и для прототипных методов.
+
+
+// Задачи после раздела
+
+// Класс расширяет объект?
+// class Rabbit extends Object {
+//     constructor(name) {
+//         super();
+//         this.name = name;
+//     }
+// }
+
+// let rabbit = new Rabbit('Koll');
+// console.log(rabbit.name); // Kroll
+// console.log(rabbit.hasOwnProperty('name')); // true
+
+// Приватные и защищённые свойства

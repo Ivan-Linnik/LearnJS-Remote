@@ -7587,4 +7587,169 @@ let options = {
 // console.log(rabbit.name); // Kroll
 // console.log(rabbit.hasOwnProperty('name')); // true
 
+
 // Приватные и защищённые свойства
+// один из важнейших методов ООП - разделение внутреннего и внешнего интерфейсов.
+
+// Внутренние и внешние интерфейсы
+// в ООП все свойства и методы разделены на 2 группы:
+// Внутренний интерфейс - методы и свойства доступные из других методов класса, но недоступные снаружи класса.
+// Внешний интерфейс - методы и свойства доступные снаружи класса.
+
+// Теперь к делу: в JS есть два типа полей:
+// Публичные - доступны отовсюду. Они составляют внешний интерфейс. До этого момента я использовал только такие.
+// Приватные - доступны только внутри класса. Они для внутреннего интерфейса.
+
+// Интересно, что в JS защищённые поля не реализованы на уровне языка. Но они очень полезны, поэтому их эмулируют.
+
+// Ниже я реализую немного упрощённую модель кофеварки.
+// Защищённое свойство waterAmount
+
+// создаю простой класс для описания кофеварки
+// class CoffeeMachine {
+//     waterAmount = 0; // количесвто воды внутри
+
+//     constructor(power) {
+//         this.power = power;
+//         console.log(`Создана кофеварка мощностью ${power} Вт`);
+//     }
+// }
+
+// создаю новую кофеварку, мощностью 100 Вт
+// let coffeeMacine = new CoffeeMachine(100);
+// // добавляю воды
+// coffeeMacine.waterAmount = 200;
+
+// И сейчас все свойства и методы публичные. Я изменю свойство количества воды, чтобы никто не мог устанавливать его ниже 0.
+// Защищённые свойства обычно начинаются с префикса "_". И это не сиснтаксис языка, это соглашение программистов - такие свойства 
+// и методы не должны быть доступны извне.
+
+// class CoffeeMachine {
+//     _waterAmount = 0;
+
+//     set waterAmount(value) {
+//         if (value < 0) throw new Error('Отрицательное количество воды');
+//         this._waterAmount = value;
+//         console.log(`Объём бака с водой ${this.waterAmount} мл`);
+//     }
+
+//     get waterAmount() {
+//         return this._waterAmount;
+//     }
+
+//     constructor(power) {
+//         this.power = power;
+//         console.log(`Создана кофеварка мощностью ${power} Вт`);
+//     }
+// }
+
+// let coffeeMacine = new CoffeeMAchine(200);
+// coffeeMacine.waterAmount = -10; // Uncaught Error: Отрицательное количество воды
+// coffeeMacine.waterAmount = 300; // Объём бака с водой 300 мл
+// console.log(coffeeMacine.waterAmount); // 300
+
+// Свойство только для чтения 'power'
+// Иногда нужно, чтобы свойство устанавливалось при создании, и больше никогда не менялось. Для этого нужно установить только
+// геттер, без сеттера.
+// class CoffeeMachine {
+//     constructor(power) {
+//         this._power = power;
+//     }
+
+//     get power() {
+//         return this._power;
+//     }
+// }
+
+// let coffeeMacine = new CoffeeMachine(200);
+// console.log(coffeeMacine.power); // 200
+// coffeeMacine.power = 100; // Cannot set property power of #<CoffeeMachine> which has only a getter
+
+// В этих примерах я использовал синтаксис геттеров и сеттеров. Но в большинстве случаев, использование функций get.../set...
+// предпочтительнее:
+// class CoffeeMachine {
+//     _waterAmount = 0;
+
+//     setWaterAmount(value) {
+//         if (value < 0) throw new Error('Отрицательное количество воды');
+//         this._waterAmount = value;
+//     }
+
+//     getWaterAmount() {
+//         return this._waterAmount;
+//     }
+
+//     constructor(power) {
+//         this._power = power;
+//     }
+
+//     getPower() {
+//         return this._power;
+//     }
+// }
+
+// let coffeeMacine = new CoffeeMachine(100);
+// coffeeMacine.setWaterAmount(200); 
+// console.log(coffeeMacine); // CoffeeMachine {_waterAmount: 200, _power: 100}
+
+// Это выглядит немного длиннее, зато функции более гибкие. Они могу принимать больше аргументов, даже если они мне сейчас не
+// нужны. Итак, на будущее - если мне нужно что-то отрефакторить - функции, это наиболее бесопасный выбор. Но, с другой стороны,
+// синтаксис геттеров/сеттеров короче. Выбор всегда за мной.
+
+// Защищённые поля наследуются! ( в отличие от приватных)
+
+// Приватное свойство
+// это новая возможность - понадобится полифил. Его суть:
+// Приватные свойства и методы должны начинаться с #. Они доступны только внутри класса.
+
+// class CoffeeMachine {
+//     #waterLimit = 400;
+
+//     #checkWater(value) {
+//         if (value < 0) throw new Error('Нет такого количества воды');
+//         if (value > this.#waterLimit) throw new Error(`Нельзя залить больше объема бака. Его объём: ${this.#waterLimit}`);
+//     }
+// }
+
+// let newCoffeeMac = new CoffeeMachine();
+
+// снаружи нет доступа к приватным методам
+// newCoffeeMac.#checkWater(); // Private field '#checkWater' must be declared in an enclosing class
+// newCoffeeMac.#waterLimit = 500; // Private field '#waterLimit' must be declared in an enclosing class
+
+// это означает, что поле приватное. Я не могу получить к нему доступ извне или из наследуемых классов.
+// Приватные поля не конфликтуют с публичными. Например, у меня будет два поля #waterAmount и waterAmount
+
+// class CoffeMachine {
+//     #waterAmount = 0;
+
+//     get waterAmount() {
+//         return this.#waterAmount;
+//     }
+
+//     set waterAmount(value) {
+//         if (value < 0) throw new Error ('Setter\'s rule: Can\'t be less than zero!');
+//         this.#waterAmount = value;
+//     }
+// }
+
+// let machine = new CoffeMachine();
+// machine.waterAmount = -100;
+// console.log(machine.#waterAmount); // Private field '#waterAmount' must be declared in an enclosing class
+
+// В отличие от защищённых, функциональность приватных полей обеспечивается самим языком. Это хорошо.
+
+// Но если я унаследую от CoffeMachine, то не получу прямого доступа к #waterAmount. Я буду вынужден полагаться на геттер/сеттер
+// waterAmount.
+
+// class MegaMachine extends CoffeMachine {
+//     method() {
+//         console.log(this.#waterAmount); // Private field '#waterAmount' must be declared in an enclosing class
+//     }
+// }
+
+// Получается, что во многих случаях такое ограничение слишком жёсткое. И если я уж расширяю класс, то вполне возможно захочу
+// иметь доступ к внутренним свойствам и методам. Поэтому защищённые поля используются чаще, хоть и не поддерживаются синтаксисом
+// языка.
+// Важно помнить, что приватные поля особенные. Обычно я могу получить доступ к к полям объекта при помощи this[fieldName], но
+// с приватными полями такое невозможно. Это ограничение синтаксиса нужно для обеспечения приватности.

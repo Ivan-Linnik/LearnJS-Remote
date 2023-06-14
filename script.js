@@ -7753,3 +7753,70 @@ let options = {
 // языка.
 // Важно помнить, что приватные поля особенные. Обычно я могу получить доступ к к полям объекта при помощи this[fieldName], но
 // с приватными полями такое невозможно. Это ограничение синтаксиса нужно для обеспечения приватности.
+
+
+// Расширение встроенных классов
+
+// от встроенных классов Array и Map тоже можно наследовать.
+// class PowerArray extends Array {
+//     isEmpty() {
+//         return this.length === 0
+//     }
+// }
+
+// let arr = new PowerArray(1, 2, 3, 4, 5, 6, 7);
+// console.log(arr.isEmpty()); // false
+// console.log(arr.includes(7), arr.indexOf(7)); // true 6 - встроенные методы массива работают
+
+// let filteredArr = arr.filter(item => item >= 4);
+// console.log(filteredArr); // [4, 5, 6, 7] - тут тоже всё работает
+
+// filteredArr.length = 0; // очищаю массив
+// console.log(
+//     filteredArr,
+//     filteredArr.length,
+//     filteredArr.isEmpty()
+// ); // [] 0 true - всё работает, включая мой метод
+
+// Интересный момент, что встроенные методы (includes(), filter(), indexOf() ит.д.) возвращают новые объекты унаследованного
+// класса PowerArray. То есть, используется конструктор PowerArray, и я могу использовать все его методы.
+// console.log(arr.constructor === PowerArray); // true
+
+// Более того, я могу настроить это поведение при помощи специального статического геттера, и с его помощью можно вернуть,
+// конструктор, который JS  будет использовать в filter, map, includes и других методах для создания новых объектов.
+// Если бы я хотел, чтобы эти методы аозвращали обычные массивы, то мог бы прописать вот так:
+class PowerArray extends Array {
+    isEmpty() {
+        return this.length === 0;
+    }
+
+    // теперь встроенные методы массива будут использовать этот метод как конструктор
+    static get [Symbol.species]() {
+        return Array;
+    }
+}
+
+let arr = new PowerArray(1, 2, 3, 4);
+console.log(arr.isEmpty()); //false
+
+let filteredArr = arr.filter(item => item >= 2);
+console.log(filteredArr); // [2, 3, 4]
+
+// теперь проверю, работает ли мой метод в новом экземпляре класса
+// console.log(filteredArr.isEmpty()); // Uncaught TypeError: filteredArr.isEmpty is not a function - нет!
+
+// а всё потому, что
+console.log(filteredArr.constructor); // Array() - теперь объект массива является прототипом, а не PowerArray, в котором был
+// мой пользовательский метод. Проще говоря - теперь filter() возвращает Array, а не PowerArray, то есть расширенная
+// функциональность не будет передаваться далее.
+// Этот статический геттер актуален и для других объектов, типа Map, Set. Они также используют [Stymbol.species].
+
+
+// ВСТРОЕННЫЕ КЛАССЫ НЕ НАСЛЕДУЮТ СТАТИЧЕСКИЕ МЕТОДЫ
+// например Array и Date наследуют от Object, так что в их экземплярах доступны методы из Object.prototype. Но Array.[[Prototype]]
+// не ссылается на Object, поэтому нет методов типа Array.keys() или Date.keys().
+
+// В этом и есть главное отличие наследования встроенных объектов от того, что я получаю с использованием extends.
+
+
+// Проверка класса: "isinstanceof"

@@ -8058,7 +8058,8 @@ let options = {
 // let error = new Error(message);
 // или let error = new SyntaxError(message);
 
-// Для встроенных объектов ошибок (ТОЛЬКО ДЛЯ НИХ) свойство name - это в точности имя конструктора, а свойство message берётся из аргумента. Например:
+// Для встроенных объектов ошибок (ТОЛЬКО ДЛЯ НИХ) свойство name - это в точности имя конструктора, а свойство message берётся
+// из аргумента. Например:
 // let error = new Error('Ебать, ошибка');
 // console.log(error); // Error: Ебать, ошибка  at script.js:8062:13
 
@@ -8191,3 +8192,295 @@ let options = {
 
 
 // Пользовательские ошибки, расширение Error
+// В процессе разработки часто нужно использовать собственные объекты ошибок. Будь то ошибка при работе с HTTP запросами
+// или базой данных. Мои ошибки в идеале должны поддерживать стандартные свойства, типа name, message, stack. Но могут быть
+// использованы и другие - как при работе с HTTP, объекты HttpError используют свойство statusCode (404, 403, 500).
+// При создании объектов ошибки лучше применять наследование, потому что не знаешь, насколько разрастётся код, и что придётся
+// отлавливать по мере роста кода.
+
+// Расширение Error
+// напишу функцию, которая будет читать данные из json и валидировать их.
+// Для вывода ошибки я создам класс, который будет наследовать от Error. Ниже будет псевдокод Error, чтобы я видел, от чего
+// наследовать.
+// class Error {
+//     constructor(message) {
+//         this.message = message;
+//         this.name = 'Error'; // (разные имена для разных встроенных классов ошибок)
+//         this.stack = '<стек вызовов>'; // нестандартное свойство, но обычно поддерживается
+//     }
+// }
+
+// class ValidationError extends Error {
+//     constructor(message) {
+//         super(message); // обязательный вызов родительского конструктора, потому что он устанавливает message
+//         this.name = 'ValidationError'; // он также устанавливает имя, поэтому я его сбрасываю на правильное для этого класса
+//     }
+// }
+
+// сначала тестовая функция
+// function test() {
+//     throw new ValidationError('Упс...');
+// }
+
+// try {
+//     test();
+// } catch (err) {
+//     console.log(err.name);
+//     console.log(err.message);
+//     console.log(err.stack);
+// }
+
+// Теперь попробую его для функции, читающей из json
+// несколько вариантов под разные ошибки
+// let jsonNormal = '{"name": "John", "age": 30}';
+// let jsonName = '{"age": 30}';
+// let jsonSynt = '{"name": "John" "age": 30}';
+
+// function readUser(json) {
+//     let user = JSON.parse(json);
+
+//     if (!user.name) {
+//         throw new ValidationError('Нет поля name');
+//     }
+//     if (!user.age) {
+//         throw new ValidationError('Нет поля age');
+//     }
+
+//     return user;
+// }
+
+// try {
+//     console.log(readUser(jsonSynt));
+// } catch (err) {
+//     if (err instanceof ValidationError) {
+//         console.log('Некорректные данные: ' + err.message);
+//     } else if (err instanceof SyntaxError) {
+//         console.log('JSON Ошибка синтаксиса: ' + err.message);
+//     } else {
+//         throw err; // если неизвестная ошибка - пробросить её из конструкции
+//     }
+// }
+// конструкция работает - она обрататывает ошибки в зависимости от их типа (пока только 2), все остальные - выбрасывает наружу.
+
+
+// Дальнейшее наследование
+// Класс ValidationError является слишком общим. Сделаю более корректный класс для проверки отсутсвующих свойств. Он будет нести
+// дополнительную информацию о свойстве, которое отсутствует. Далее по порядку:
+// class MyError {
+//     constructor(message) {
+//         this.message = message;
+//         this.name = 'MyError';
+//     }
+// }
+
+// class ValidationError extends MyError {
+//     constructor(message) {
+//         super(message);
+//         this.name = 'ValidationError';
+//     }
+// }
+
+// class PropertyRequiredError extends ValidationError {
+//     constructor(property) {
+//         super('Нет свойства: ' + property); // вызываю родительский конструктор с аргументом в скобках
+//         this.name = 'PropertyRequiredError'; // собственно имя объекта класса
+//         this.property = property; // имя свойства будет передано при создании объекта (вызове конструктора класса)
+//     }
+// }
+
+// // Применение
+// let exampleJson = '{"age": 30}';
+
+// function readUser(json) {
+//     let user = JSON.parse(json);
+
+//     if (!user.age) {
+//         throw new PropertyRequiredError('age');
+//     }
+//     if (!user.name) {
+//         throw new PropertyRequiredError('name');
+//     }
+
+//     return user;
+// }
+
+// try {
+//     readUser(exampleJson);
+// } catch (err) {
+//     if (err instanceof ValidationError) {
+//         console.log('Неверные данные: ' + err.message); // Неверные данные: Нет свойства: name
+//         console.log(err.name); // PropertyRequiredError
+//         console.log(err.property); // name - потому что в json только возраст, нет имени
+//     } else if (err instanceof SyntaxError) {
+//         console.log('Ошибка синтаксиса JSON: ' + err.message);
+//         console.log('Имя ошибки: ' + err.name);
+//     } else {
+//         throw err; // проброс ошибки, если она неизвестна
+//     }
+// }
+
+// Новый класс PropertyRequiredError легко использовать: нужно указать только имя свойства, а сообщение для пользователя
+// message генерируется конструктором.
+// В книге обращают внимание, что свойство this.name в конструкторе присвоено вручную. Это утомительно - постоянно писать руками.
+// Можно создать мой собственный базовый класс ошибки, который будет присваивать имени ошибки имя конструктора (в объектах ошибок
+// так можно делать, об этом написано ранее в книге). И затем наследовать все ошибки уже от него. Перепишу весь код заново:
+
+// class MyBasicError {
+//     constructor(message) {
+//         this.message = message;
+//         this.name = this.constructor.name;
+//     }
+// }
+
+// class ValidationError extends MyBasicError { }
+
+// class PropertyRequiredError extends ValidationError {
+//     constructor(property) {
+//         super('No such property: ' + property);
+//         this.property = property;
+//     }
+// }
+// // код стал заметно короче, потому что не нужно дублировать this.name, а конструктор прототипно наследуется.
+
+// let json = '{"name": "John", "ge: 30}';
+
+// function readUser(json) {
+//     let user = JSON.parse(json);
+
+//     if (!user.name) {
+//         throw new PropertyRequiredError('name');
+//     } else if (!user.age) {
+//         throw new PropertyRequiredError('age');
+//     }
+//     return user;
+// }
+
+// try {
+//     readUser(json);
+// } catch (err) {
+//     if (err instanceof ValidationError) {
+//         console.log('Incorrect data: ' + err.message);
+//         console.log(err.name); // PropertyRequiredError
+//     } else if (err instanceof SyntaxError) {
+//         console.log('Incorrect JSON: ' + err.message);
+//         console.log(err.name); // SyntaxError
+//     } else {
+//         throw err;
+//     }
+// }
+
+
+// Обёртывание исключений
+// Сейчас назначение функции readUser - чтение данных. В процессе её работы могут возникать различные виды ошибок.
+// Сейчас их два вида. Но что, если функция разрастётся и сможет давать другие ошибки? Код, который вызывает readUser должен
+// обрабатывать эти ошибки. Сейчас в этом коде используются конструкции if в блоке catch, которые проверяют известные классы,
+// а неизвестные ошибки при это пробрасывают. Но если функция способна генерировать столько ошибок, нужно ли мне проверять все
+// типы ошибок поодиночке во всех местах в коде, где вызывается realUser? - нет. Чаще всего внешний код хочет иметь какую-то
+// обобщённую ошибку чтения данных. Почему это произошло часто не имеет значения. Но лучше, когда есть способ узнать причину ошибки
+// только тогда, когда мне это нужно.
+// Итак, я создам новый класс ReadError, для представления таких ошибок. Если ошибка возникнет, я её перехвачу и сгенерирую
+// readError, я также сохраню ссылку на исходную ошибку в свойстве cause. Тогда внешний код должен будет проверить только наличие
+// ReadError. Перепишу для наглядности старый код.
+
+// class Error {
+//     constructor(message) {
+//         this.message = message;
+//         this.name = this.constructor.name;
+//     }
+// }
+
+// class ValidationError extends Error { }
+
+// class PropertyRequiredError extends ValidationError {
+//     constructor(property) {
+//         super('Отсутствует свойство ' + property);
+//         this.property = property;
+//     }
+// }
+
+// class ReadError extends Error {
+//     constructor(message, cause) {
+//         super(message);
+//         this.cause = cause;
+//     }
+// }
+
+// // теперь функция валидации
+// function validateUser(user) {
+//     if (!user.name) {
+//         throw new PropertyRequiredError('name');
+//     }
+//     if (!user.age) {
+//         throw new PropertyRequiredError('age');
+//     }
+// }
+
+// // новая функция чтения
+// function readUser(json) {
+//     let user;
+
+//     try {
+//         user = JSON.parse(json); // сначала пробую просто прочитать json
+//     } catch (err) {
+//         if (err instanceof SyntaxError) {
+//             throw new ReadError('Синтаксическая ошибка', err); // выдать синтаксическую ошибку (если есть)
+//         } else {
+//             throw err;
+//         }
+//     }
+
+//     try {
+//         validateUser(user); // здесь уже проверяю сами поля, если json прочитался
+//     } catch (err) {
+//         if (err instanceof ValidationError) {
+//             throw new ReadError('Ошибка валидации', err);
+//         } else {
+//             throw err;
+//         }
+//     }
+// }
+
+// // пробую
+// try {
+//     readUser('{"name": "Stan"}');
+// } catch (e) {
+//     if (e instanceof ReadError) {
+//         console.log(e.message);
+//         console.log('Исходная ошибка: ' + e.cause);
+//     } else {
+//         throw e;
+//     }
+// }
+
+// Выше функция ReadError работает, как и описано - распознаёт синтаксические ошибки и ошибки валидации и выдаёт вместо них ошибки
+// ReadError. Неизвестные ошибки пробрасываются.
+// Внешний код проверяет только instance of ReadError. Не нужно перечислять все возможные типы ошибок.
+
+// Такой подход называется обёртывание исключений, потому что я беру исключения низкого уровня и оборачиваю их в ReadError,
+// котрый является болл абстрактным и более удобным в вызывающем коде. Такой подход широко используется в ООП.
+
+
+// Задачи после раздела
+// Наследование от SyntaxError
+
+// class FormatError extends SyntaxError {
+//     constructor(message) {
+//         super(message);
+//         this.name = this.constructor.name;
+//         this.stack = 'stack';
+//     }
+// }
+
+// let err = new FormatError('Ошибка форматирования');
+
+// console.log(err.message); // Ошибка форматирования
+// console.log(err.name); // FormatError
+// console.log(err.stack); // stack
+// console.log(err instanceof FormatError); // true
+// console.log(err instanceof SyntaxError); // true
+
+// всё работает в соответствии с заданием
+
+
+// Промисы, async/await
+// Введение: колбэки

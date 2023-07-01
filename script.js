@@ -3828,7 +3828,6 @@ let options = {
 // function bench(f) {
 //     let date1 = new Date(0)
 //     let date2 = new Date();
-
 //     let start = Date.now();
 
 //     for (let i = 0; i < 100000; i++) f(date1, date2);
@@ -8654,7 +8653,7 @@ let options = {
 // Её аргументы - resolve, reject - это колбэки, которые предоставляет сам JS. Мой код - только внутри исполнителя!
 
 // Когда промис получает результат (сейчас или позже), он должен вызвать один из колбэков. Resolve(value) - если работа
-// завершилась успешно, с результатом value, reject(error) - если произошла ошибка, с объектом ошибки error.
+// завершилась успешно, с результатом value или reject(error) - если произошла ошибка, с объектом ошибки error.
 // Итак, исполнитель вызывается автоматически, а затем должен вызвать один из колбэков.
 
 // У объекта, возвращаемого конструктором new Promise есть внутренние свойства:
@@ -8772,7 +8771,7 @@ let options = {
 // Вызов finally(f) похож на then(f, f) в том смысле, что f выполнится в любом случае, когда промис завершится успешно или
 // с ошибкой.
 // Идея finally состоит в том, чтобы настроить обработчик для выполнения очистки/доведения после завершения предыдущих операций.
-// Например, остановка идникатор загрузки, закрытие больше ненужных соединений и т.д.
+// Например, остановка идникатора загрузки, закрытие больше ненужных соединений и т.д.
 // В книге предлагают думать об этом, как о вечеринке - неважно какой она была, хорошей или плохой - после неё нужно сделать
 // уборку. Код может выглядеть следующим образом:
 
@@ -8823,7 +8822,7 @@ let options = {
 // в последующий обработчик вместо любого предыдущего результата.
 
 // На завершённых промисах обработчики запускаются сразу. Если промис находится в состоянии ожидания, то обработчики тоже будут
-// ждать. Как только он перейдёт в завершённое состояние - они немедленно запустятся.
+// ждать. Как только промис перейдёт в завершённое состояние - они немедленно запустятся.
 
 
 // Пример loadScript - здесь мне предлагают рассмотреть реальные примеры того, как промисы могут облегчить мне жизнь.
@@ -8902,3 +8901,318 @@ let options = {
 
 
 // Цепочка промисов
+// В систуации из главы "Введение : колбэки" у меня есть последовательность асинхронных задач, которые должны быть выполнены
+// одна за другой. Напрмер, последовательная загрузка скриптов. В этой главе я рассмотрю, как грамотно реализовать это в коде
+// с помощью цепочки промисов. Она выглядит вот так:
+
+// new Promise(function (resolve, reject) {
+
+//     setTimeout(() => resolve(1), 1e3);
+
+// }).then(function (result) {
+//     console.log(result); // 1
+//     return result * 2;
+
+// }).then(function (result) {
+//     console.log(result); // 2
+//     return result * 2;
+
+// }).then(function (result) {
+//     console.log(result); // 4
+//     return result * 2;
+// });
+
+// Идея состоит в том, что результат первого промиса передаётся по цепочке обработчиков .then.
+// Всё это работает, потому что promise.then тоже возвращает промис, так что я могутвызвать на нём следующий .then.
+// Когда обрабочтик возвращает какое-то значение, оно становится результатом выполнения соответствующего промиса и
+// передаётся в следующий then.
+
+// ! Классическая ошибка новичков: технически возможно добавить много обработчиков .then к единственному промису, но это не цепочка.
+// Например:
+// let promise = new Promise(function(resolve, reject) {
+//     setTimeout(() => resolve(1), 1e3);
+// });
+
+// promise.then(function(result) {
+//     console.log(result); // 1
+//     return result * 2;
+// });
+
+// promise.then(function(result) {
+//     console.log(result); // 1
+//     return result * 2;
+// });
+
+// promise.then(function(result) {
+//     console.log(result); // 1
+//     return result * 2;
+// });
+
+// Вот я добавил несколько обработчиков другому промису, но они не передают друг другу результат, они действуют независимо.
+
+
+// Возвращаем промисы
+// Обработчик, переданный в then может вернуть промис. В этом случае следующие обработчики будут ждать, пока он выполнится.
+// Вот пример:
+// new Promise(function (resolve, reject) {
+//     setTimeout(() => resolve(1), 1e3);
+
+// }).then(function (result) {
+//     console.log(result);
+
+//     return new Promise(function (resolve, reject) {
+//         setTimeout(() => resolve(result * 2), 2e3);
+//     });
+
+// }).then(function (result) {
+//     console.log(result);
+
+//     return new Promise(function (resolve, reject) {
+//         setTimeout(() => resolve(result * 2), 1e3);
+//     });
+
+// }).then(function (result) {
+//     console.log(result);
+// });
+
+// Здесь первый then показывает 1 и возвращает новый промис, который успешно выолняется через 1 секунду, и его результат (аргумент
+// в resolve, т.е. result * 2 передаётся обработчику в следующем then. И этот обработчик делает то же самое.
+// Как и в предыдущем примере выведется результат 1>2>4, но теперь между ними существует пауза 1 сек.
+
+// Возвращая промисы, я могу создавать цепочки из асинхронных действий.
+
+
+// Пример с loadScript
+// // Функция также будет загружать скрипты по очереди, но теперь она промисифицирована
+// function loadScript(src) {
+//     return new Promise((resolve, reject) => {
+//         let script = document.createElement('script ');
+//         script.src = src;
+
+//         script.onload = resolve(script);
+//         script.onerror = reject(new Error('Не удалось загрузить скрипт'));
+
+//         document.head.append(script);
+//     });
+// }
+
+// loadScript('/article/promise-chain-one.js')
+//     .then(function (script) {
+//         return loadScript('/article/promise-chain-two.js');
+//     })
+//     .then(function (script) {
+//         return loadScript('article/promise-chain-three.js');
+//     })
+//     .then(function (script) {
+//         // вызову функции, объявленные в загруженных скриптах, чтобы показать, что они действительно загрузились
+//         one();
+//         two();
+//         three();
+//     });
+
+// Этот же код можно переписать короче, используя стрелочные функции
+// loadScript('/article/promise-chain-one.js')
+//     .then(script => loadScript('/article/promise-chain-two.js'))
+//     .then(script => loadScript('/article/promise-chain-three.js'))
+//     .then(script => {
+//         one();
+//         two();
+//         three();
+//     });
+
+// Здесь каждый вызов loadScript возвращает промис, и следующий обработчик в then сработает только тогда, когда
+// этот промис завершается. Затем инициируется загрузка следующего скрипта и т.д.
+
+// Технически можно добавлять then напрямую к каждому вызову loadScript, но тогда код снова начнёт расти вправо, и вообще,
+// использование цепочек предпочтительнее.
+// Но иногда приемлемо добавлять then напрямую, чтобы вложенная в него функция имела доступ к внешней области видимости - НО
+// это скорее исключение чем правило.
+
+
+// Thenable
+// Обработчик может возвращать не только промис, а любой объект, содержащий метод .then, такие объекты называют thenable.
+// Смысл в том, что сторонние библиотеки могут создавать свои собственные объекты, совместимые с промисами. Они могут иметь
+// свои наборы методов и при этом быть совместимыми со встроенными промисами, так как реализуют метод then, например:
+
+// class Thenable {
+//     constructor(num) {
+//         this.num = num;
+//     }
+//     then(resolve, reject) {
+//         console.log(resolve); // ƒ () { [native code] }
+
+//         // будет успешно выполнено с аргументом this.num * 2 через 1 секунду
+//         setTimeout(() => resolve(this.num * 2), 1e3);
+//     }
+// }
+
+// new Promise(resolve => resolve(1))
+//     .then(result => {
+//         return new Thenable(result); // *
+//     })
+//     .then(console.log); // покажет 2 через 1 секунду
+
+// JS проверяет объект, возвращаемый из обработчика .then в строке *: если у него имеется метод then, который можно вызвать, то
+// этот метод вызывается, и в него передаются как аргументы встроенные функции - resolve и reject, вызов одной из которых потом
+// ожидается. В примере выше произошёл вызов resolve через 1 секунду, затем передаётся по цепочке дальше.
+// Это позволяет добавлять в цепочки промисов пользовательские объекты, не заставляя их наследовать от Promise.
+
+
+// Fetch
+// Во фронтенд разработке промисы часто используются, чтобы делать запросы по сети.
+// Я буду использовать его (метод fetch), чтобы подгрузить информацию о пользователях. У него много опциональных параметров.
+// Его базовый синтксис let promise = fetch(url); - этот код запрашивает урл и возвращает промис.
+// Промис успешно выполняется и в свою очередь возвращает объект response после того, как удалённый сервер присылает
+// заголовки ответа, но до того, как весь ответ сервера полностью загружен.
+// Чтобы прочитать полный ответ, нужно вызвать метод response.text(): он тоже возвращает промис, который выполлняется, когда
+// данные с сервера полностью загружены с удалённого сервера, и возвращает эти данные.
+
+// fetch('https://jsonplaceholder.typicode.com/todos/1')
+//     // then в коде ниже выполняется, когда удалённый сервер отвечает
+//     .then(function (response) {
+//         // response.text() - возвращает новый промис, который выполняется
+//         // и возвращает полный ответ сервера, когда он загрузится
+//         return response.text();
+//     })
+//     .then(function (text) {
+//         // ... и здесь содержимое полученного файла
+//         console.log(text); // {"userId": 1, "id": 1, "title": "delectus aut autem", "completed": false}
+//     });
+
+// // Есть также метод response.json() - он больше подходит для этого примера. Также я использую стрелочные функции для краткости.
+// fetch('https://jsonplaceholder.typicode.com/todos/2')
+//     .then(response => response.json())
+//     .then(user => console.log(user.title)); // quis ut nam facilis et officia qui
+
+// Теперь попробую что-нибудь сделать с данными пользователя. Например, я могу послать запрос на  GitHub, чтобы загрузить данные
+// из профиля пользователя, чтобы загрузить его аватар. Пример из книги:
+
+// запрашиваю данные пользователя
+// fetch('https://jsonplaceholder.typicode.com/users/', { // посмотрел как юзать этот апи, чтобы кастомизировать ответ сервера
+//     method: 'POST',
+//     body: JSON.stringify({
+//         title: 'foo',
+//         body: 'bar',
+//         userId: 1,
+//         name: 'Ivan-Linnik', // добавил новое свойство, чтобы к нему обратиться - это мой никнейм на Гите
+//     }),
+//     headers: {
+//         'Content-type': 'application/json; charset=UTF-8',
+//     },
+// })
+//     // загружаю данные в формате json
+//     .then(response => response.json())
+//     // делаю запрос к GitHub, используя полученные данные пользователя
+//     .then(result => fetch(`https://api.github.com/users/${result.name}`))
+//     // загружаю ответ в формате json
+//     .then(response => response.json())
+
+//     // показываю аватар(githubUser.avatar_url) в течение 3 секунд
+//     .then(githubUser => {
+//         let main = document.querySelector('.main__container');
+//         let img = document.createElement('img');
+//         img.src = githubUser.avatar_url; // заменил изображение на странице
+//         img.style.width = '250px';
+
+//         main.appendChild(img);
+
+//         setTimeout(() => { img.remove() }, 5e3); // вернул обратно (*)
+//     });
+
+// Код работает, но в нём есть проблема. Она в строке (*): как я могу предпринять какие-то действия после того, как аватар
+// был показан и удалён? Например, я бы хотел показать форму редактирования пользователя или что-то ещё, но сейчас это невозможно.
+// Чтобы сделать код расширяемым нужно возвращать ещё один промис, который будет выполняться после того, как завершается показ 
+// аватара.
+
+// fetch('https://jsonplaceholder.typicode.com/users/', {
+//     method: 'POST',
+//     body: JSON.stringify({
+//         title: 'foo',
+//         body: 'bar',
+//         userId: 1,
+//         name: 'Ivan-Linnik', // добавил новое свойство, чтобы к нему обратиться - это мой никнейм на Гите
+//     }),
+//     headers: {
+//         'Content-type': 'application/json; charset=UTF-8',
+//     },
+// })
+//     .then(response => response.json())
+//     .then(result => fetch(`https://api.github.com/users/${result.name}`))
+//     .then(response => response.json())
+//     .then(githubUser => new Promise(function (resolve, reject) { // (*)
+//         let main = document.querySelector('.main__container');
+//         let img = document.createElement('img');
+
+//         img.src = githubUser.avatar_url;
+//         img.style.width = '250px';
+
+//         main.appendChild(img);
+
+//         setTimeout(() => {
+//             img.remove();
+//             resolve(githubUser);
+//         }, 3e3);
+//     }))
+//     .then(githubUser => console.log(`Завершён показ автара пользователя ${githubUser.name}.
+// URL аватара: ${githubUser.avatar_url}.`));
+
+
+// Здесь обработчик then в строке (*) будет возвращать новый промис, который перейдёт в состояние "выполнен" после того,
+// как в setTimeout будет вызван колбэк resolve c объектом githubUser. Соответственно следующий по цепочке then будет ждать этого.
+
+// Как правило, все асинхронные действия должны возвращать промис. Это позволяет планировать какие действия будут выполнены после
+// него. Даже если это не нужно прямо сейчас, это может понадобиться в будущем.
+
+// Теперь автор предлагает разобрать код на отдельные функции, пригодные для использования.
+// function loadJson(url, options) {
+//     return fetch(url, options)
+//         .then(response => response.json());
+// }
+
+// function loadGithubUser(name) {
+//     return fetch(`https://api.github.com/users/${name}`)
+//         .then(response => response.json());
+// }
+
+// function showAvatar(githubUser) {
+//     return new Promise(function (resolve, reject) {
+//         let main = document.querySelector('.main__container');
+//         let img = document.createElement('img');
+
+//         img.src = githubUser.avatar_url;
+//         img.style.width = '250px';
+//         main.append(img);
+
+//         setTimeout(() => {
+//             img.remove();
+
+//             resolve(githubUser);
+//         }, 3e3);
+//     });
+// }
+
+// // Использование этих функций
+// loadJson('https://jsonplaceholder.typicode.com/users/', {
+//     method: 'POST',
+//     body: JSON.stringify({
+//         userId: 1,
+//         name: 'Ivan-Linnik',
+//     }),
+//     headers: {
+//         'Content-type': 'application/json; charset=UTF-8',
+//     },
+// })
+//     .then(user => loadGithubUser(user.name))
+//     .then(showAvatar)
+//     .then(githubUser => console.log(`Завершил показ аватара пользователя ${githubUser.name}`));
+
+
+// Задачи после раздела
+
+// Сравните then и catch
+// promise.then(f1).catch(f2) не будет эквивалентно promise.then(f1, f2). Потому что ошибка произойдёт в f1, то она
+// будет обработана только в блоке catch в этом примере: promise.then(f1).catch(f2). Ошибка передаётся по цепочке, а в первом
+// случае после then ничего нет, поэтому нечему её обрабатывать.
+
+
+// Промисы: обработка ошибок

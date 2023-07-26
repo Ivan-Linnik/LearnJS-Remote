@@ -9216,3 +9216,442 @@ let options = {
 
 
 // Промисы: обработка ошибок
+// Кэтч можно размещать, где угодно, например в конце. Таим образом удобно ловить ошибки. Если всё в порядке, то он просто не выполнится, но если любой из
+// промисов будет отклонён, то ошибка сразу попадё в блок кэтч.
+
+
+// Неявный try...catch
+// Вокруг функции промиса и и обработчиков находится невидымый блок трай...кэтч. Если происходит исключение, что оно перехватывается, и промис считается
+// отклонённым с этой ошибкой.
+
+// new Promise(function(resolve, reject) {
+//     throw new Error('Error-error');
+// }).catch(console.log); // это работает также, как и пример ниже
+
+// new Promise(function(resolve, reject) {
+//     reject(new Error('Error-error'));
+// }).catch(console.log); 
+
+// Неявный трай-кэтч поймает любую ошибку в промисе, обработчике, даже программную ошибку.
+
+
+// Проброс ошибок
+// Ошибки в промисах можно пробрасывать по аналоги с трай-кэтч.
+// Ниже блок кэтч обработает ошибку и передаст результат в зен.
+
+// new Promise(function(resolve, reject) {
+//     reject(new Error('Ups'));
+// }).catch(function(error) {
+//     console.log('Handle an ' + error);
+// }).then(() => console.log('Now control is here'))
+
+
+// Необработанные ошибки
+// в промисах, как и в трай...кэтч, если ошибку не перехватить, скрипт умирает с сообщением в консоли. Движок это отслеживает и генерирует глобальную ошибку.
+
+// В браузере поймать такие ошибки можно при помощи события unhandledrejection. Пример:
+// new Promise(function () {
+//     throw new Error('Sosi');
+// }).then(result => console.log(result))
+
+// window.addEventListener('unhandledrejection', function (event) {
+//     console.log(event.promise); // Promise {<rejected>: Error: Sosi
+//     console.log(event.reason); // Error: Sosi
+// });
+
+// Это событие является частью стандарта HTML
+
+
+// Promise API
+// В классе Promise есть 6 статических методов
+
+// Promise.all - нужен тогда, когда мне нужно запустить сразу несколько промисов параллельно и дождаться, пока они выполнятся. Например, загрузить несколько файлов
+// и обработать результат.
+// В качестве аргумента передаётся перебираемый объект, как правило массив промисов, вот так:
+
+// let promises = Promise.all([
+//     new Promise((resolve) => {
+//         resolve(1);
+//     }),
+//     new Promise((resolve) => {
+//         setTimeout(() => resolve(2), 1e3);
+//     }),
+//     new Promise((resolve) => {
+//         resolve(3)
+//     }),
+// ]);
+
+// а в качестве результата возвращается новый промис
+// promises.then(console.log); // [1, 2, 3] - новый промис завершится, когда выполнятся все промисы в переданном массиве, а его результатом будет
+// массив результатов выполнения всех переданных промисов. Здесь каждый промис даёт элемент массива. Важно отметить, что порядок элементов массива соотвествует
+// порядку переданных промисов. У меня второй промис выполняется дольше всех, но всё равно, результаты будут записаны в массив по порядку.
+
+// Часто используемый трюк - пропустить массив данных через мап-функцию, которая для каждого элемента создаст задачу-промис, и затем обернуть получившийся массив
+// в промис.олл, вот так:
+
+// let urls = [
+//     'https://api.github.com/users/iliakan',
+//     'https://api.github.com/users/remy',
+//     'https://api.github.com/users/jeresig'
+// ];
+
+// let requests = urls.map(url => fetch(url));
+
+// Promise.all(requests)
+// .then(responses => responses.forEach(
+//     response => console.log(`${response.url}: ${response.status}`) // выведет url и статус 200 для каждого запроса
+// ));
+
+
+// Теперь пример побольше, с получением данных пользователей гитхаб по их логинам из массива (также можно получать массив товаров по их идентификаторам).
+// let names = ['iliakan', 'remy', 'jeresig'];
+
+// let requests = names.map(name => fetch(`https://api.github.com/users/${name}`));
+
+// Promise.all(requests)
+//     .then(responses => {
+//         // все промисы успешно завершены
+//         responses.forEach(response => {
+//             console.log(`${response.url}: ${response.status}`);
+//         });
+
+//         return responses;
+//     })
+//     // преобразовать массив ответов в json, чтобы прочитать содержимое каждого
+//     .then(responses => Promise.all(responses.map(r => r.json())))
+//     .then(users => {
+//         users.forEach(user => console.log(user.name, user.id))
+//     });
+
+// Если один из промисов завершится ошибкой, то и промис, возвращаемый промис.олл завершится с этой ошибкой. Пример:
+// Promise.all([
+//     new Promise((resolve, reject) => resolve(1)),
+//     new Promise((resolve, reject) => setTimeout(() => reject(new Error('Ups...')), 1e3)),
+//     new Promise((resolve, reject) => setTimeout(() => resolve(2), 1e3))
+// ])
+// .catch(console.log); // Error: Ups... at script.js:184:62
+
+// *Технически в промис.олл можно передать не только промисы, в таком случае, переданное что-то будет обрабатываться как есть, и также попадёт в массив результатов.
+
+
+// Promise.allSettled([iterable]) - в отличие от промис.олл, ожидает завершения всех промисов (неудачных в том числе), и возвращает массив результатов с объектами
+// завершённых промисов, в которых указано состояние завершенного промиса и результат.
+// В массиве результатов будет:
+// {status:"fulfilled", value:результат} для успешных завершений,
+// {status:"rejected", reason:ошибка} для ошибок.
+
+// Например мне нужно загрузить данные пользователей, и если один из них не загрузится, то я всё равно хочу получить остальные, пример ниже:
+
+// let urls = [
+//     'https://api.github.com/users/iliakan',
+//     'https://api.github.com/users/remy',
+//     'https://no-such-url'
+// ];
+
+// Promise.allSettled(urls.map(url => fetch(url)))
+//     .then((results) => console.log(results));
+
+// Теперь для каждого промиса у меня есть статус и значение/ошибка.
+
+// Promise.race([iterable]) - берёт результат первого выполненного промиса, будь то значение или ошибка.
+
+// Promise.any([iterable]) - ждёт только первый успешно выполненный промис, из которого берёт результат.
+
+// Promise.resolve/reject - старый синтаксис, ему на замену пришли async/await
+
+
+// Промисификация
+// Означает преобразование функции - я беру функцию, которая принимает колбэк и меняю её, чтобы она возвращала промис.
+// Например у меня есть функция (ниже) - я её промисифицирую.
+
+// function loadScript(src, callback) {
+//     let script = document.createElement('script');
+//     script.src = src;
+
+//     script.onload = () => callback(script);
+//     script.onerror = () => callback(new Error('Ошибка загрузки скрипта: ', src));
+
+//     document.head.append(script);
+// }
+
+// // После промисификации новая функция будет принимать только src и возвращать промис.
+// let loadScriptPromise = function (src) {
+//     return new Promise((resolve, reject) => {
+//         loadScript(src, (err, script) => {
+//             if (err) reject(err)
+//             else resolve(script);
+//         });
+//     });
+// }
+// использование: loadscriptPromise('/needed/path.js).then(...)
+
+// На практике нужно промисифицироавть не одну функцию, поэтому я напишу универсальную функцию-помощник.
+
+// function promisMe(func) {
+//     return function (...args) { //возвращает анонимную функцию-обёртку, которая возвращает промис
+//         return new Promise(function (resolve, reject) {
+//             function callback(err, result) { // специальный колбэк для func
+//                 if (err) {
+//                     reject(err);
+//                 } else {
+//                     resolve(result);
+//                 }
+//             }
+
+//             args.push(callback); // кладу колбэк в конец массива аргументов функции func
+
+//             func.call(this, args); // вызываю оригинальную функцию
+//         })
+//     }
+// }
+
+// использование
+// let loadScriptPromise = promisMe(loadScript);
+// loadScriptPromise(...).then(...);
+
+// здесь я подразумеваю, что исходная функция ожидает колбэк с двумя аргументами. Если аргументов больше, то тогда нужно будет сделать
+// улучшенyую версию функции (см. учебник).
+
+
+// Микрозадачи
+// Обработчики промисов всегда асинхронны, даже если промис выполнился мгновенно, смотрю ниже:
+// let promise = Promise.resolve();
+// promise.then(()=> console.log('Promise completed')); // выполнится вторым
+// console.log('Code completed'); // выполнится первым
+
+// почему зен не срабатывает первым?
+
+// Очередь микрозадач
+// Для правильного управления асинхронными задачами стандарт предусматривает внутренню очередь - PromiseJobs - она же очередь микрозадач.
+// Она работает так - "первый пришёл, первый выполнен", задачи выполняются только в том случае, если ничего больше не запущено.
+// Получается, что обработчики попадают в очередь, и пока не выполняются, а выполняется другой код.
+// Но что если мне важна последовательность - всё просто, поместить нужный код в следующий зен, и они выполнятся последовательно с предыдущим зен.
+
+
+// Необработанная ошибка возникает в случае, если ошибка промиса не обрабатывается к конце очереди микрозадач. И даже если я попытаюсь отловить ошибку глобально,
+// это ни на что не повлияет, так как код уже ляжет, потому что ошибка попала в очередь вне цепочки микрозадач. Поэтому ловить их нужно своевременно.
+
+
+// Async/await
+// это специальный синтаксис для работы с промисами.
+
+// Асинхронные функции - это функции, которые всегда возвращают промис. Любые другие значения, возвращаемые такими функциями оборачиваются в промисы автоматически.
+// Для этого используется ключевое слово async, вот так:
+// async function f() {
+//     return 1;
+// }
+
+// f().then(console.log); // 1
+
+
+// Await
+// ещё одно ключевое слово. Может использоваться только внутри async-функций. Это слово заставиит интерпретатор ожидать пока часть справа от await не выполнится, а
+// потом вернёт результат и выполнение кода продолжится.
+// В этом примере промис успешно выполнится через 1 секунду:
+// async function f() {
+//     let promise = new Promise((resolve) => {
+//         setTimeout(() => resolve('Done!'), 1e3);
+//     });
+
+//     let result = await promise; // *
+
+//     console.log(result); // Done! - через 1 сеукнду
+// }
+
+// f();
+// В этом примере выполнение функции остановится на строке * до тех пор, пока промис не выполнится, после чего в переменную result будет записан
+// результат выполнения промиса.
+// Важно помнить, что await не занимает ресурсов процессора, другие скрипты и код будут и дальше выполняться, ожидать будет только конкретная асинхронная функция.
+
+// Это просто синкасический сахар для получения промиса, более нагрядный, чем зен. Await нельзя использовать вне async функций, будет синтаксическая ошибка.
+// Теперь я перепишу showAvatar из раздела Цепочки промисов при помощи асинхронных функция.
+// 1. Мне нужно заменить then на await
+// 2. Добавить ключевое слово async перед объявлением функции
+
+// async function showAvatar() {
+//     // запрашиваю json с данными пользователя
+//     let response = fetch('/article/promise-chaining/user.json');
+//     let user = await response.json();
+
+//     // запрашиваю информацию об этом пользователе
+//     let githubResponse = fetch(`https://api.github.com/users/${user.name}`);
+//     let githubUser = await githubResponse.json();
+
+//     // отбражаю аватар пользоваеля
+//     let img = document.createElement('img');
+//     img.src = githubUser.avatar_url;
+//     document.body.append(img);
+
+//     // жду 3 секунды и скрываю аватар
+//     await new Promise((resolve, reject) => { setTimeout(() => resolve), 3e3 });
+
+//     img.remove;
+
+//     return githubUser;
+// }
+
+// showAvatar();
+
+// Чтобы выполнить await на верхнем уровне вложенности можно обернуть код в ананимную функцию, вот так
+// (async () => {
+//     let response = await fetch('...');
+//     let user = await response.json();
+// })();
+
+// Await работает с thenable объектами, также как и зен.
+// class Thenable {
+//     constructor(num) {
+//         this.num = num;
+//     }
+
+//     then(resolve, reject) {
+//         console.log(resolve);
+
+//         setTimeout(resolve(this.num * 2), 1e3);
+//     }
+// };
+
+// async function f() {
+//     // код будет ждать 1 секунду
+//     // после чего значение result станет равным 2
+//     let result = await new Thenable(1);
+//     console.log(result);
+// }
+
+// f();
+
+// Для объявления асинхронного метода класса достаточно перед таким написать async.
+
+
+// Задачи после раздела
+// переписать,используя async/await
+
+// function loadScript(url) {
+//     return fetch(url)
+//         .then(response => {
+//             if (response.status == 200) {
+//                 return response.json();
+//             } else {
+//                 throw new Error(response.status);
+//             }
+//         });
+// }
+
+// loadScript('no/such-user.json')
+//     .catch(console.log); // 404
+
+
+// // это решение из книги
+// async function ldScrpt(url) {
+//     let request = await fetch(url);
+
+//     if (request.status == 200) {
+//         let response = await request.json();
+//         return response;
+//     } else {
+//         throw new Error(request.status);
+//     }
+// }
+// ldScrpt('no/such-user.json')
+//     .catch(console.log);
+
+
+
+// 1. переписать,используя async/await
+// 2. В функции demoGithubUser замените рекурсию на цикл: используя async/await , сделать это будет просто.
+
+// class HttpError extends Error {
+//     constructor(response) {
+//         super(`${response.status} for ${response.url}`);
+//         this.name = 'HttpError';
+//         this.response = response;
+//     }
+// }
+
+// function loadJson(url) {
+//     return fetch(url).then(response => {
+//         if (response.status == 200) {
+//             return response.json();
+//         } else {
+//             throw new HttpError(response);
+//         }
+//     });
+// }
+
+// // Запрашивать логин, пока github не вернёт существующего пользователя.
+// function demoGithubUser() {
+//     let name = prompt("Введите логин?", "iliakan");
+
+//     return loadJson(`https://api.github.com/users/${name}`).then(user => {
+//         alert(`Полное имя: ${user.name}.`);
+//         return user;
+//     })
+//         .catch(err => {
+//             if (err instanceof HttpError && err.response.status == 404) {
+//                 alert("Такого пользователя не существует, пожалуйста, повторите ввод.");
+//                 return demoGithubUser();
+//             } else {
+//                 throw err;
+//             }
+//         });
+// }
+// // demoGithubUser();
+
+
+// // 1. решение
+// async function loadJsonAsync(url) {
+//     let responce = await fetch(url);
+
+//     if (responce.status == 200) {
+//         return responce.json();
+//     } else {
+//         throw new HttpError(responce);
+//     }
+// }
+
+// // 2. решение (подсмотрел)
+// async function demoGithubUserAsync() {
+//     let user;
+
+//     while (true) {
+//         let name = prompt('Введите логин', 'iliakan');
+
+//         try {
+//             user = await loadJsonAsync(`https://api.github.com/users/${name}`);
+//             break; // если ошибок не было - выхожу из цикла
+//         } catch (err) {
+//             if (err instanceof HttpError && err.response.status == 404) {
+//                 // после alert начнётся новая итерация цикла
+//                 alert('Нет такого пользователя, повторите ввод');
+//             } else {
+//                 throw err; // пробрасываю ошибку, если она неизвестна
+//             }
+//         }
+//     }
+
+//     console.log(`Полное имя: ${user.name}`);
+//     return user;
+// }
+
+// demoGithubUserAsync()
+//     .then(console.log);
+
+
+// Вызовите async–функцию из "обычной"
+// Есть «обычная» функция. Как можно внутри неё получить результат выполнения async – функции?
+
+// async function wait() {
+//     await new Promise(resolve => setTimeout(resolve, 1000));
+//     return 10;
+// }
+
+// function f() {
+//     let asyncResult;
+
+//     wait().then(result => console.log(result));
+// }
+
+// f(); // 10
+
+
+// Генераторы, продвинутая итерация

@@ -9655,3 +9655,243 @@ let options = {
 
 
 // Генераторы, продвинутая итерация
+// Генераторы могут порождать значения одно за другим, по мере необходимости. Они отлично работают с перебираемыми объектами
+// и могут создавать потоки данных.
+
+// Функция-генератор создаётся при помощи специальной конструкции function*, вот как она выглядит:
+// function* generator() {
+//     yield 1;
+//     yield 2;
+//     return 3;
+// }
+
+// Когда такая функция вызвана, она не выполняет свой код, вместо этого она возвращает специальный объект (генератор) для управления
+// её выполнением. Смотрю ниже:
+// function* generate() {
+//     yield 1;
+//     yield 2;
+//     return 3;
+// }
+
+// let generator = generate();
+// console.log(generator); // generate {<suspended>}
+
+// Основным методом генератора является next(). При его вызове он запускает выполнение до ближайшей конструкции yield, затем
+// выполнение кода приостанавливается, и во внешний код возвращается объект с ключами: value (результат yield) и done - статус
+// выполнения, когда true - работа функции останавлявается. Если значение yield отсутствует, value : undefined.
+// console.log(generator.next()); // {value: 1, done: false}
+// console.log(generator.next()); // {value: 2, done: false} - повторный вызов возобновит работу генератора
+// console.log(generator.next()); // {value: 3, done: true} - последний вызов (return) завершит работу генератора
+// console.log(generator.next()); // {value: undefined, done: true}
+
+
+// Перебор генераторов
+// генераторы можно перебирать через for of
+// function* generate() {
+//     yield 1;
+//     yield 2;
+//     return 3;
+// }
+
+// let generator = generate();
+
+// for (let value of generator) {
+//     console.log(value); // 1 2 (тройки нет) - потому что перебор игнорирует последнее значение, потому что done: true.
+// }
+
+// если я хочу получить последнее значение, то должен использовать yield вместо return:
+// function* generateAll() {
+//     yield 1;
+//     yield 2;
+//     yield 3;
+// }
+
+// let generator2 = generateAll();
+
+// for (let value of generator2) {
+//     console.log(value); // 1 2 3
+// }
+
+// Поскольку генераторы являются перебираемыми объектами, я могу использовать с ними оператор расширения, вот так:
+// function* gen () {
+//     yield 1;
+//     yield 'sosi';
+//     yield true;
+// }
+
+// let sequence = [0, ...gen()];
+// console.log(sequence); // [0, 1, 'sosi', true]
+
+
+// Использование генераторов для перебираемых объектов
+
+// вспомню, что такое перебираемый объект
+// let range = {
+//     from: 0,
+//     to: 5,
+
+//     [Symbol.iterator]() {
+//         // for..of вызывает этот метод один раз в самом начале
+//         // он возвращает перебираемый объект, и далее for..of работает только с ним
+//         return {
+//             current: this.from,
+//             last: this.to,
+
+//             // next() - вызывается при каждой итерации цикла
+//             next() {
+//                 // нужно вернуть значение как объект {done: ..., value: ...}
+//                 if (this.current <= this.last) {
+//                     return { done: false, value: this.current++ };
+//                 } else {
+//                     return { done: true };
+//                 }
+//             }
+//         }
+//     }
+// };
+
+// console.log('range: ' + [...range]); // range: 0,1,2,3,4,5
+
+// // теперь я могу использовать функцию-генератор для итерации, указав её в Symbol.iterator
+// let rangeMod = {
+//     from: 0,
+//     to: 5,
+
+//     *[Symbol.iterator]() { // - это краткая запись для [Symbol.iterator]: function* ()
+//         for (let value = this.from; value <= this.to; value++) {
+//             yield value;
+//         }
+//     }
+// };
+
+// console.log('rangeMod: ' + [...rangeMod]); // rangeMod: 0,1,2,3,4,5
+
+// Это работает, потому что генератор возвращает всё то, что ожидает for..of - объект вида {done: ..., value: ...}, а также
+// у него есть метод next(). Генераторы были добавлены в язык в том числе для упрощения создания перебираемых объектов.
+
+
+// Композиция генераторов
+// это возможность генераторов, которая позволяет прозрачно встраивать генераторы друг в друга.
+
+// Например, у меня есть функция, генерирующая последовательность чисел
+// function* genSequence(start, end) {
+//     for (let value = start; value <= end; value++) {
+//         yield value;
+//     }
+// }
+
+// Я могу использовать её для генерации более сложной последовательности:
+// сначала цифры 0-9 (с кодами символов 48-57)
+// за которыми следуют буквы в верхнем регистре A-Z (коды символов 65-90)
+// за которыми следуют уквы алфавита a-z (коды символов 97-122)
+
+// это можно использовать например для генерации паролей, выбирать символы из неё. Но сначала её нужно сгенерировать.
+
+// В обычной функции, чтобы объеденить результаты нескольких функций, мне нужно получать их в переменные и только потом объединять.
+// В функциях-генераторах есть синтаксис *yield, который позволяет вкладывать их друг в друга (осуществлять композицию).
+
+// function* generateSequence(start, end) {
+//     for (let i = start; i <= end; i++) {
+//         yield i;
+//     }
+// }
+
+// function* generatePassword() {
+//     // 0-9
+//     yield* generateSequence(48, 57);
+
+//     // A-Z
+//     yield* generateSequence(65, 90);
+
+//     //a-z
+//     yield* generateSequence(97, 122);
+
+//     // symbols
+//     yield* generateSequence(33, 46);
+// }
+
+// let str = '';
+
+// for (let code of generatePassword()) {
+//     str += String.fromCharCode((code * Math.random()).toFixed(0));
+// }
+
+// console.log(str);
+
+// Директива yield* делегирует выполнение другому генератору. Это означает, что yield* gen перебирает генератор gen и прозрачно
+// направляет его вывод наружу. Как если бы значения были сгенерированы внешним генератором.
+
+
+// yield - дорога в обе стороны - дело в том, что эта директива может не только отдавать значения наружу,но и передавать значения
+// из внешнего кода в генератор. Чтобы это сделать, нужно вызвать generator.next(arg) с аргументом, и этот аргумент становится
+// результатом yield.
+
+// function* gen() {
+//     let result = yield '2 + 2 = ?'; // (*)
+
+//     console.log(result)
+// }
+
+// let generator = gen();
+
+// let question = generator.next().value; // yield возвращает значение
+
+// generator.next(4); // 4
+
+// внешний код не обязан сразу вызывать next(), ему может потребоваться время - в таком случае генератор подождёт:
+// setTimeout(() => generator.next(5), 1e3);
+
+// пример для наглядности
+// function* gen() {
+//     let ask1 = yield "2 + 2 = ?";
+//     alert(ask1); // 4
+//     let ask2 = yield "3 * 3 = ?"
+//     alert(ask2); // 9
+// }
+
+// let generator2 = gen();
+// alert(generator2.next().value); // "2 + 2 = ?"
+// alert(generator2.next(4).value); // "3 * 3 = ?"
+// alert(generator2.next(9).done); // true
+
+// generator.throw
+// можно не только передавать значения во внешний код, но и инициировать ошибку. Ошибка - это тоде результат.
+// это делается так - generator.throw(err). Пример ниже:
+// function* gen() {
+//     try {
+//         let result = yield '2 + 2 = ?';
+//         console.log('Выполнение программы не дойдёт до этой строки, потому что выше возникнет исключение', result);
+//     } catch (e) {
+//         console.log(e); // покажет ошибку
+//     }
+// }
+
+// let generator = gen();
+
+// let question = generator.next().value;
+
+// generator.throw(new Error('Ответ не найден внутри программы')); // Error: Ответ не найден внутри программы
+
+// Если ошибку не перехватить, то она, как и раньше - вывалится наружу и "положит" код.
+
+
+// Задачи после раздела
+// Псевжослучайный генератор
+
+// function* pseudoRandom(seed) {
+//     let val = seed;
+
+//     while (true) {
+//         val = val * 16807 % 2147483647;
+//         yield val;
+//     }
+// }
+
+// let generator = pseudoRandom(1);
+
+// console.log(generator.next().value); // 16807
+// console.log(generator.next().value); // 282475249
+// console.log(generator.next().value); // 1622650073
+
+
+// Асинхронные итераторы и генераторы
